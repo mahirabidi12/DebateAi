@@ -1,9 +1,11 @@
 import express from "express";
+import mongoose from "mongoose";
 import Debate from "../models/debateModel.js";
 import Message from "../models/messageModel.js";
-import { generateDebateAiOpeningPrompt } from "../services/prompts.js";
+import { generateDebateAiOpeningPrompt, generateDebateAiResponsePrompt } from "../services/prompts.js";
 import { getGeminiResponse } from "../services/gemini.js";
 import { getEmbedding } from "../services/huggingface.js";
+
 
 export async function createDebate(req, res) {
   try {
@@ -41,7 +43,7 @@ export async function getDebatesForUser(req, res) {
 
 export async function getDebateById(req, res) {
     try {
-        console.log(req.params.id)
+        // console.log(req.params.id)
         const debate = await Debate.findById(req.params.id);
         if (!debate) {
             return res.status(404).json({ message: 'Debate not found' });
@@ -97,4 +99,219 @@ export async function getFirstAiArgument(req, res) {
     }
 }
 
+
+export async function addUserMessage(req, res) {
+    try {
+        const { debateId, message } = req.body;
+        if (!debateId || !message) {
+            return res.status(400).json({ message: "Debate ID and message are required." });
+        }
+
+        const debate = await Debate.findById(debateId);
+        if (!debate) {
+            return res.status(404).json({ message: "Debate not found." });
+        }
+        if (debate.user.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "User not authorized." });
+        }
+
+        const embedding = await getEmbedding(message);
+
+        await Message.create({
+            debateId: debateId,
+            role: 'user',
+            text: message,
+            embedding: embedding
+        });
+        
+        debate.userStatementCount += 1;
+        await debate.save();
+
+        res.status(201).json({ message: "Message saved successfully." });
+    } catch (error) {
+        console.error("Error adding user message:", error);
+        res.status(500).json({ message: "Failed to save user message." });
+    }
+}
+
+
+export async function getAiResponse(req, res) {
+        // try {
+        //     const { debateId, userLastArgument } = req.body;
+
+        //     if (!debateId || !userLastArgument) {
+        //         return res.status(400).json({ message: "Debate ID and user's last argument are required." });
+        //     }
+            
+        //     const debate = await Debate.findById(debateId);
+        //     if (!debate) {
+        //         return res.status(404).json({ message: "Debate not found." });
+        //     }
+
+        //     const lastAiMessage = await Message.findOne({ debateId, role: 'ai' }).sort({ createdAt: -1 });
+        //     if (!lastAiMessage) {
+        //         return res.status(404).json({ message: "Could not find previous AI argument." });
+        //     }
+
+        //     // --- RAG Implementation Starts Here ---
+            
+        //     // 1. Get embedding for the user's current argument to use in the search
+        //     const queryEmbedding = await getEmbedding(userLastArgument);
+
+        //     let relatedUserArguments = [];
+            
+        //     // 2. Perform vector search only if there are previous user messages to search through
+        //     const userMessageCount = await Message.countDocuments({ debateId, role: 'user' });
+        //     console.log(userMessageCount)
+
+        //     // We check for > 1 because the current message has already been saved. We need at least one *previous* message.
+        //     if (userMessageCount > 1) { 
+        //         const similarDocs = await Message.aggregate([
+        //             {
+        //                 $vectorSearch: {
+        //                     index: 'vector_index', // This MUST match the name of the index you created in Atlas
+        //                     path: 'embedding',
+        //                     queryVector: queryEmbedding,
+        //                     numCandidates: 15, // Number of candidates to consider
+        //                     limit: 3, // Return the top 3 most similar documents
+        //                     filter: {
+        //                         debateId: new mongoose.Types.ObjectId(debateId),
+        //                         role: 'user'
+        //                     }
+        //                 }
+        //             },
+        //             {
+        //                 $project: {
+        //                     _id: 0,
+        //                     text: 1,
+        //                     score: { $meta: 'vectorSearchScore' }
+        //                 }
+        //             }
+        //         ]);
+        //         // Filter out the current argument from the search results and map to an array of strings
+        //         relatedUserArguments = similarDocs
+        //             .filter(doc => doc.text !== userLastArgument)
+        //             .map(doc => doc.text);
+        //     }
+            
+        //     // --- RAG Implementation Ends Here ---
+
+        //     console.log(relatedUserArguments)
+
+            
+        //     const aiStance = debate.stance === 'for' ? 'against' : 'for';
+            
+        //     const prompt = generateDebateAiResponsePrompt({
+        //         topic: debate.topic,
+        //         aiStance,
+        //         userLastArgument,
+        //         aiLastArgument: lastAiMessage.text,
+        //         relatedUserArguments 
+        //     });
+
+        //     const aiResponse = await getGeminiResponse(prompt);
+        //     const embedding = await getEmbedding(aiResponse);
+
+        //     await Message.create({
+        //         debateId,
+        //         role: 'ai',
+        //         text: aiResponse,
+        //         embedding
+        //     });
+
+        //     debate.aiStatementCount += 1;
+        //     await debate.save();
+
+        //     res.status(200).json({ response: aiResponse });
+
+        // } catch (error) {
+        //     console.error("Error generating AI response:", error);
+        //     res.status(500).json({ message: "Failed to generate AI response." });
+        // }
+        try {
+        const { debateId, userLastArgument } = req.body;
+
+        if (!debateId || !userLastArgument) {
+            return res.status(400).json({ message: "Debate ID and user's last argument are required." });
+        }
+        
+        const debate = await Debate.findById(debateId);
+        if (!debate) {
+            return res.status(404).json({ message: "Debate not found." });
+        }
+
+        const lastAiMessage = await Message.findOne({ debateId, role: 'ai' }).sort({ createdAt: -1 });
+        if (!lastAiMessage) {
+            return res.status(404).json({ message: "Could not find previous AI argument." });
+        }
+
+        // --- RAG Implementation Starts Here ---
+        
+        // Get embedding for the user's current argument to use in the search
+        const queryEmbedding = await getEmbedding(userLastArgument);
+
+        // Always perform the vector search. The JS filter below will handle the results.
+        const similarDocs = await Message.aggregate([
+            {
+                $vectorSearch: {
+                    index: 'vector_index_2', // This MUST match the name of the index you created in Atlas
+                    path: 'embedding',
+                    queryVector: queryEmbedding,
+                    numCandidates: 15,
+                    limit: 4, // Fetch 4 to have a better chance of getting 3 *other* arguments
+                    filter: {
+                        debateId: new mongoose.Types.ObjectId(debateId),
+                        role: 'user'
+                    }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    text: 1,
+                    score: { $meta: 'vectorSearchScore' }
+                }
+            }
+        ]);
+
+        // Filter out the *exact* same message from the results and take the top 3
+        const relatedUserArguments = similarDocs
+            .filter(doc => doc.text !== userLastArgument)
+            .slice(0, 3) // Ensure we only take up to 3 related arguments
+            .map(doc => doc.text);
+        
+        // --- RAG Implementation Ends Here ---
+
+        console.log("Found related user arguments:", relatedUserArguments);
+        
+        const aiStance = debate.stance === 'for' ? 'against' : 'for';
+        
+        const prompt = generateDebateAiResponsePrompt({
+            topic: debate.topic,
+            aiStance,
+            userLastArgument,
+            aiLastArgument: lastAiMessage.text,
+            relatedUserArguments 
+        });
+
+        const aiResponse = await getGeminiResponse(prompt);
+        const embedding = await getEmbedding(aiResponse);
+
+        await Message.create({
+            debateId,
+            role: 'ai',
+            text: aiResponse,
+            embedding
+        });
+
+        debate.aiStatementCount += 1;
+        await debate.save();
+
+        res.status(200).json({ response: aiResponse });
+
+    } catch (error) {
+        console.error("Error generating AI response:", error);
+        res.status(500).json({ message: "Failed to generate AI response." });
+    }
+}
 

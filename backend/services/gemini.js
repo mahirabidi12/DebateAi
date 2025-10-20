@@ -11,7 +11,6 @@ export async function getGeminiResponse(prompt) {
       model: "gemini-2.5-flash",
       contents: prompt,
     });
-    console.log(response.text)
     return response.text
   } catch (error) {
     throw new Error("Failed to generate content from Gemini");
