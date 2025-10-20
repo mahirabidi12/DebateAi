@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import jwt from "jsonwebtoken";
+import jwt, { decode } from "jsonwebtoken";
 import User from "../models/userModel.js";
 
 dotenv.config();
@@ -12,7 +12,8 @@ async function protect(req, res, next) {
 
   try {
     const decoded = await jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await User.findById(decoded._id).select("-password");
+    req.user = await User.findById(decoded.id).select("-password");
+    // console.log(req.user)
     next();
   } catch (error) {
     return res.status(401).json({ message: "Not authorized, invalid token" });

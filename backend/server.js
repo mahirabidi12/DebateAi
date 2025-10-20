@@ -2,9 +2,10 @@ import express from 'express'
 import app from './app.js'
 import dotenv from 'dotenv'
 import cookieParser from 'cookie-parser'
+import cors from "cors";
 import connectDb from './config/db.js'
 import authRouter from './routes/authRoutes.js'
-import cors from "cors";
+import debateRouter from './routes/debateRoutes.js'
 
 dotenv.config()
 
@@ -23,5 +24,6 @@ app.listen(process.env.PORT , () => {
 })
 
 app.use("/auth" , authRouter)
+app.use("/debate" , debateRouter)
 
 connectDb()

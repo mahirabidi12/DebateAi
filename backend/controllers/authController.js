@@ -1,10 +1,7 @@
-import User from "../models/userModel.js";
 import express from "express";
+import User from "../models/userModel.js";
 import generateToken from "../utils/generateToken.js";
 
-
-import Message from "../models/messageModel.js";
-import Debate from "../models/debateModel.js";
 
 export async function signup(req, res) {
   try {
