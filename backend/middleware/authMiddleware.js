@@ -1,11 +1,12 @@
 import dotenv from "dotenv";
-import jwt, { decode } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
 
 dotenv.config();
 
 async function protect(req, res, next) {
   const token = req.cookies.token;
+  console.log(token)
   if (!token) {
     return res.status(401).json({ msg: "No token, not authorized" });
   }
@@ -20,4 +21,4 @@ async function protect(req, res, next) {
   }
 }
 
-export default protect
+export default protect 
