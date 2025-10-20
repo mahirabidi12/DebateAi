@@ -45,7 +45,7 @@ import FeaturesSection from '../components/sections/FeaturesSection';
 import HowItWorksSection from '../components/sections/HowItWorksSection';
 import TestimonialsSection from '../components/sections/TestimonialsSection';
 import PricingSection from '../components/sections/PricingSection';
-import FAQSection from '../components/sections/FAQSection';
+import FAQSection from '../components/sections/FAQsection.jsx';
 import BackgroundAnimation from '../components/ui/BackgroundAnimation';
 
 export const LandingPage = () => {
