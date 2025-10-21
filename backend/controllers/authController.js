@@ -50,3 +50,14 @@ export async function login(req, res) {
     res.status(401).json("InvalidCredentials , Login failed")
   }
 }
+
+
+export function logout(req, res) {
+    res.cookie('token', '', {
+        httpOnly: true,
+        expires: new Date(0),
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+    });
+    res.status(200).json({ message: "Logged out successfully." });
+}
