@@ -2,7 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import Debate from "../models/debateModel.js";
 import Message from "../models/messageModel.js";
-import { generateDebateAiOpeningPrompt, generateDebateAiResponsePrompt } from "../services/prompts.js";
+import { generateDebateAiOpeningPrompt, generateDebateAiResponsePrompt, generateDebateTopicsPrompt } from "../services/prompts.js";
 import { getGeminiResponse } from "../services/gemini.js";
 import { getEmbedding } from "../services/huggingface.js";
 
@@ -94,6 +94,11 @@ export async function getFirstAiArgument(req, res) {
         
         res.status(200).json({ argument: aiArgument });
     } catch (error) {
+        // console.error("Error generating first AI argument:", error);
+        // res.status(500).json({ message: "Failed to generate AI argument." });
+        if (error.message === 'GEMINI_MODEL_OVERLOADED') {
+            return res.status(503).json({ message: "The AI model is currently overloaded. Please try again in a moment." });
+        }
         console.error("Error generating first AI argument:", error);
         res.status(500).json({ message: "Failed to generate AI argument." });
     }
@@ -218,6 +223,11 @@ export async function getAiResponse(req, res) {
         res.status(200).json({ response: aiResponse });
 
     } catch (error) {
+        // console.error("Error generating AI response:", error);
+        // res.status(500).json({ message: "Failed to generate AI response." });
+        if (error.message === 'GEMINI_MODEL_OVERLOADED') {
+            return res.status(503).json({ message: "The AI model is currently overloaded. Please try again in a moment." });
+        }
         console.error("Error generating AI response:", error);
         res.status(500).json({ message: "Failed to generate AI response." });
     }
@@ -232,3 +242,32 @@ export async function getDebateHistory(req, res) {
         res.status(500).json({ message: "Failed to fetch debate history." });
     }
 }
+
+export async function getDebateTopics(req,res) {
+    try {
+        const prompt = generateDebateTopicsPrompt()
+        let response = await getGeminiResponse(prompt)
+
+        const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/);
+        if (jsonMatch && jsonMatch[1]) {
+            response = jsonMatch[1];
+        }
+
+        // Further cleanup for any remaining non-JSON characters
+        response = response.trim();
+        if (response.startsWith('`')) {
+            response = response.replace(/`/g, '');
+        }
+        
+
+        const result = JSON.parse(response)
+        console.log(result)
+        res.status(200).json({result})
+    } catch (error) { 
+        console.log(error)
+        if (error.message === 'GEMINI_MODEL_OVERLOADED') {
+            return res.status(503).json({ message: "The AI model is currently overloaded. Please try again in a moment." });
+        }
+        res.status(500).json({"message" : "Failed to fetch best topics "}) 
+    }
+}  
