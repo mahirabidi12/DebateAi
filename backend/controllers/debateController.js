@@ -4,7 +4,9 @@ import Debate from "../models/debateModel.js";
 import Message from "../models/messageModel.js";
 import { generateDebateAiOpeningPrompt, generateDebateAiResponsePrompt, generateDebateTopicsPrompt } from "../services/prompts.js";
 import { getGeminiResponse } from "../services/gemini.js";
-import { getEmbedding } from "../services/huggingface.js";
+// import { getEmbedding } from "../services/huggingface.js";
+import { generateSpeech } from "../services/polly.js";
+import { getEmbedding } from "../services/embeddingService.js";
 
 
 export async function createDebate(req, res) {
@@ -74,11 +76,17 @@ export async function getFirstAiArgument(req, res) {
         }
 
         const prompt = generateDebateAiOpeningPrompt(topic,stance)
-        
         const aiArgument = await getGeminiResponse(prompt);
         
         // Generate embedding for the AI's argument
-        const embedding = await getEmbedding(aiArgument);
+        // const embedding = await getEmbedding(aiArgument);
+
+         const [embedding, audioData] = await Promise.all([
+            getEmbedding(aiArgument),
+            generateSpeech(aiArgument)
+        ]);
+
+        console.log(embedding)
 
         // Save the AI's first message to the database
         await Message.create({
@@ -92,7 +100,7 @@ export async function getFirstAiArgument(req, res) {
         debate.aiStatementCount += 1;
         await debate.save();
         
-        res.status(200).json({ argument: aiArgument });
+        res.status(200).json({ argument: aiArgument ,  audio: audioData });
     } catch (error) {
         // console.error("Error generating first AI argument:", error);
         // res.status(500).json({ message: "Failed to generate AI argument." });
@@ -207,20 +215,24 @@ export async function getAiResponse(req, res) {
             relatedUserArguments 
         });
 
-        const aiResponse = await getGeminiResponse(prompt);
-        const embedding = await getEmbedding(aiResponse);
+        const aiResponseText = await getGeminiResponse(prompt);
+        // const embedding = await getEmbedding(aiResponse);
+        const [embedding, audioData] = await Promise.all([
+            getEmbedding(aiResponseText),
+            generateSpeech(aiResponseText)
+        ]);
 
         await Message.create({
             debateId,
             role: 'ai',
-            text: aiResponse,
+            text: aiResponseText,
             embedding
         });
 
         debate.aiStatementCount += 1;
         await debate.save();
 
-        res.status(200).json({ response: aiResponse });
+        res.status(200).json({ response: aiResponseText , audio: audioData  });
 
     } catch (error) {
         // console.error("Error generating AI response:", error);
@@ -261,8 +273,8 @@ export async function getDebateTopics(req,res) {
         
 
         const result = JSON.parse(response)
-        console.log(result)
-        res.status(200).json({result})
+        // console.log(result)
+        res.status(200).json({result}) 
     } catch (error) { 
         console.log(error)
         if (error.message === 'GEMINI_MODEL_OVERLOADED') {

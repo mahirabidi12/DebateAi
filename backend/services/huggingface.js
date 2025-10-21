@@ -18,3 +18,4 @@ export async function getEmbedding(text) {
     throw new Error("Failed to generate embedding");
   }
 }
+ 
