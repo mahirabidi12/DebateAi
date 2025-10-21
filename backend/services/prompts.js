@@ -57,3 +57,31 @@ Also , make sure to build on topic , i.e use new facts , and arguments . Don't s
 Now write your response.
   `;
 }
+
+
+export function generateDebateTopicsPrompt() {
+  return `
+You are an expert debate moderator tasked with generating engaging, diverse, and thought-provoking debate topics for a one-on-one debate platform.
+
+Your goal:
+- Generate 6 unique debate topics.
+- Include a mix of general, intellectual, and *controversial* topics that can spark meaningful discussion.
+- Controversial topics are allowed — as long as they remain respectful and do not promote hate, violence, or discrimination.
+- Cover a range of categories: technology, ethics, politics, society, science, education, psychology, culture, and global issues.
+- Each topic should be phrased as a clear statement or proposition that can be argued *for* or *against*.
+- Keep topics specific, balanced, and neutral (avoid vague or factual yes/no questions).
+- Output as a clean, numbered list — no explanations or categories.
+
+Example:
+1. Artificial intelligence poses a greater threat than benefit to humanity.
+2. Cancel culture does more harm than good.
+3. Genetic editing in humans should be legalized.
+4. Governments should prioritize national security over individual privacy.
+5. Should beef be made legal in India
+
+Now generate a fresh, creative, and balanced list of debate topics — including both mainstream and controversial ones.
+
+CRITICAL INSTRUCTION: Your final output must be **ONLY** a valid JSON array of strings, with no other text, explanation, or markdown formatting. For example: ["Topic 1", "Topic 2", "Topic 3", "Topic 4", "Topic 5", "Topic 6"]
+  `;
+}
+
