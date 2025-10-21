@@ -25,22 +25,26 @@ const userSchema = mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  debateCount: {
-    type: Number,
-    default: 0,
-  },
-  debateCountAi: {
-    type: Number,
-    default: 0,
-  },
-  debateCountFriend: {
-    type: Number,
-    default: 0,
-  },
-  debateHeadings: {
-    type: [String],
-    default: [],
-  },
+  // debateCount: {
+  //   type: Number,
+  //   default: 0,
+  // },
+  // debateCountAi: {
+  //   type: Number,
+  //   default: 0,
+  // },
+  // debateCountFriend: {
+  //   type: Number,
+  //   default: 0,
+  // },
+  // debateHeadings: {
+  //   type: [String],
+  //   default: [],
+  // },
+  analytics: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Analytics'
+  }
 });
 
 

@@ -17,6 +17,7 @@ export default function App() {
                 <Route path="/signup" element={<AuthPage />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/analytics" element={<AnalyticsPage />} />
+                <Route path="/analytics/:debateId" element={<AnalyticsPage />}/>
                 <Route path="/debate/:debateId" element={<DebatePage />} /> {/* New Route */}
             </Routes>
         </>

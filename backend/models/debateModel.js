@@ -1,5 +1,20 @@
 import mongoose from "mongoose";
 
+const analysisSchema = new mongoose.Schema({
+    clarityScore: Number,
+    concisenessScore: Number,
+    relevanceScore: Number,
+    strengths: [String],
+    areasForImprovement: [String],
+    logicalFallacies: [{
+        fallacy: String,
+        quote: String,
+        explanation: String
+    }],
+    summary: String
+}, { _id: false });
+
+
 const debateSchema = new mongoose.Schema({
   title: { type: String, required: true },
   topic: { type: String, required: true },
@@ -13,7 +28,7 @@ const debateSchema = new mongoose.Schema({
   userStatementCount: { type: Number, default: 0 },
   aiStatementCount: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now },
-  
+  analytics: analysisSchema
 });
 
 const Debate = mongoose.model("Debate", debateSchema);

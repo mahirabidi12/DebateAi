@@ -2,11 +2,12 @@ import express from "express";
 import mongoose from "mongoose";
 import Debate from "../models/debateModel.js";
 import Message from "../models/messageModel.js";
-import { generateDebateAiOpeningPrompt, generateDebateAiResponsePrompt, generateDebateTopicsPrompt } from "../services/prompts.js";
+import { generateDebateAiOpeningPrompt, generateDebateAiResponsePrompt, generateDebateAnalysisPrompt, generateDebateTopicsPrompt } from "../services/prompts.js";
 import { getGeminiResponse } from "../services/gemini.js";
 // import { getEmbedding } from "../services/huggingface.js";
 import { generateSpeech } from "../services/polly.js";
 import { getEmbedding } from "../services/embeddingService.js";
+import Analytics from "../models/analyticsModel.js";
 
 
 export async function createDebate(req, res) {
@@ -283,3 +284,95 @@ export async function getDebateTopics(req,res) {
         res.status(500).json({"message" : "Failed to fetch best topics "}) 
     }
 }  
+
+
+
+
+// --- NEW ANALYTICS FUNCTION ---
+export async function analyzeDebate(req, res) {
+    try {
+        const { id: debateId } = req.params;
+        const debate = await Debate.findById(debateId);
+
+        if (!debate) {
+            return res.status(404).json({ message: "Debate not found." });
+        }
+        if (debate.user.toString() !== req.user._id.toString()) {
+            return res.status(403).json({ message: "User not authorized." });
+        }
+
+        // Prevent re-analyzing
+        if (debate.analytics) {
+            return res.status(200).json(debate.analytics);
+        }
+
+        const messages = await Message.find({ debateId }).sort({ createdAt: 'asc' });
+        const transcript = messages.map(m => `${m.role === 'ai' ? 'AI' : 'User'}: ${m.text}`).join('\n\n');
+        
+        console.log(transcript)
+        const prompt = generateDebateAnalysisPrompt(transcript);
+        const analysisResponse = await getGeminiResponse(prompt);
+        console.log(analysisResponse)
+
+        let analysisJson;
+        try {
+            const cleanedResponse = analysisResponse.replace(/```json\s*|\s*```/g, '').trim();
+            analysisJson = JSON.parse(cleanedResponse);
+        } catch (parseError) {
+            console.error("Failed to parse analysis JSON:", parseError);
+            throw new Error("AI returned an invalid analysis format.");
+        }
+
+        debate.analytics = analysisJson;
+        await debate.save();
+
+        // Update or create central analytics for the user
+        let userAnalytics = await Analytics.findOne({ user: req.user._id });
+        if (!userAnalytics) {
+            userAnalytics = await Analytics.create({
+                user: req.user._id,
+                totalDebates: 0,
+                clarityScores: [],
+                concisenessScores: [],
+                relevanceScores: [],
+            });
+        }
+
+        userAnalytics.totalDebates += 1;
+        userAnalytics.clarityScores.push(analysisJson.clarityScore);
+        userAnalytics.concisenessScores.push(analysisJson.concisenessScore);
+        userAnalytics.relevanceScores.push(analysisJson.relevanceScore);
+        
+        await userAnalytics.save();
+
+
+        res.status(200).json(analysisJson);
+
+    } catch (error) {
+        console.error("Error analyzing debate:", error);
+        if (error.message === 'GEMINI_MODEL_OVERLOADED') {
+            return res.status(503).json({ message: "The AI model is currently overloaded. Please try again later." });
+        }
+        res.status(500).json({ message: "Failed to analyze debate." });
+    }
+}
+
+
+export async function getOverallAnalytics(req, res) {
+    try {
+        let analytics = await Analytics.findOne({ user: req.user._id });
+        if (!analytics) {
+            // If no analytics doc exists, create a default one
+            analytics = {
+                totalDebates: 0,
+                clarityScores: [],
+                concisenessScores: [],
+                relevanceScores: [],
+            };
+        }
+        res.status(200).json(analytics);
+    } catch (error) {
+        console.error("Error fetching overall analytics:", error);
+        res.status(500).json({ message: "Failed to fetch analytics." });
+    }
+}

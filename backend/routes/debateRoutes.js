@@ -2,6 +2,7 @@ import express from "express";
 import protect from "../middleware/authMiddleware.js";
 import {
   addUserMessage,
+  analyzeDebate,
   createDebate,
   getAiResponse,
   getDebateById,
@@ -9,6 +10,7 @@ import {
   getDebatesForUser,
   getDebateTopics,
   getFirstAiArgument,
+  getOverallAnalytics,
 } from "../controllers/debateController.js";
 
 const router = express.Router();
@@ -25,6 +27,10 @@ router.get("/history/:id", protect, getDebateHistory);
 
 router.get("/getDebateTopics", protect, getDebateTopics);
 
+router.get("/analytics", protect, getOverallAnalytics);
+
 router.get("/:id", protect, getDebateById);
+
+router.post("/analyze/:id", protect, analyzeDebate);
 
 export default router;

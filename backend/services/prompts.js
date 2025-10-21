@@ -85,3 +85,27 @@ CRITICAL INSTRUCTION: Your final output must be **ONLY** a valid JSON array of s
   `;
 }
 
+export function generateDebateAnalysisPrompt(debateTranscript) {
+  return `
+You are an expert debate coach and analyst. Your task is to provide a detailed, objective analysis of a user's performance in a one-on-one debate against an AI.
+
+The full transcript of the debate is provided below:
+---
+${debateTranscript}
+---
+
+Analyze the user's performance based **only** on their statements in the transcript.
+
+Your analysis must be structured as a valid JSON object with the following specific keys and value types:
+
+- "clarityScore": A number (integer or float) from 1 to 10 representing the clarity and coherence of the user's arguments.
+- "concisenessScore": A number (integer or float) from 1 to 10, rating how effectively the user made their points without unnecessary fluff.
+- "relevanceScore": A number (integer or float) from 1 to 10, assessing how well the user's arguments stayed on topic.
+- "strengths": An array of 2-3 strings, each describing a key strength in the user's performance (e.g., "Good use of rhetorical questions," "Strong opening statement").
+- "areasForImprovement": An array of 2-3 strings, each providing a constructive suggestion for improvement (e.g., "Could provide more specific evidence," "Tendency to repeat points").
+- "logicalFallacies": An array of objects. For each fallacy committed by the user, provide an object with "fallacy" (the name of the fallacy, e.g., "Ad Hominem"), "quote" (the exact user quote containing the fallacy), and "explanation" (a brief explanation of why it's a fallacy). If no fallacies are found, this should be an empty array.
+- "summary": A brief, one-paragraph summary of the user's overall performance and debate strategy.
+
+CRITICAL INSTRUCTION: Your final output must be **ONLY** the valid JSON object, with no other text, explanation, or markdown formatting.
+  `;
+}
