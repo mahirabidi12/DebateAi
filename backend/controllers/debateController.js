@@ -136,98 +136,6 @@ export async function addUserMessage(req, res) {
 
 
 export async function getAiResponse(req, res) {
-        // try {
-        //     const { debateId, userLastArgument } = req.body;
-
-        //     if (!debateId || !userLastArgument) {
-        //         return res.status(400).json({ message: "Debate ID and user's last argument are required." });
-        //     }
-            
-        //     const debate = await Debate.findById(debateId);
-        //     if (!debate) {
-        //         return res.status(404).json({ message: "Debate not found." });
-        //     }
-
-        //     const lastAiMessage = await Message.findOne({ debateId, role: 'ai' }).sort({ createdAt: -1 });
-        //     if (!lastAiMessage) {
-        //         return res.status(404).json({ message: "Could not find previous AI argument." });
-        //     }
-
-        //     // --- RAG Implementation Starts Here ---
-            
-        //     // 1. Get embedding for the user's current argument to use in the search
-        //     const queryEmbedding = await getEmbedding(userLastArgument);
-
-        //     let relatedUserArguments = [];
-            
-        //     // 2. Perform vector search only if there are previous user messages to search through
-        //     const userMessageCount = await Message.countDocuments({ debateId, role: 'user' });
-        //     console.log(userMessageCount)
-
-        //     // We check for > 1 because the current message has already been saved. We need at least one *previous* message.
-        //     if (userMessageCount > 1) { 
-        //         const similarDocs = await Message.aggregate([
-        //             {
-        //                 $vectorSearch: {
-        //                     index: 'vector_index', // This MUST match the name of the index you created in Atlas
-        //                     path: 'embedding',
-        //                     queryVector: queryEmbedding,
-        //                     numCandidates: 15, // Number of candidates to consider
-        //                     limit: 3, // Return the top 3 most similar documents
-        //                     filter: {
-        //                         debateId: new mongoose.Types.ObjectId(debateId),
-        //                         role: 'user'
-        //                     }
-        //                 }
-        //             },
-        //             {
-        //                 $project: {
-        //                     _id: 0,
-        //                     text: 1,
-        //                     score: { $meta: 'vectorSearchScore' }
-        //                 }
-        //             }
-        //         ]);
-        //         // Filter out the current argument from the search results and map to an array of strings
-        //         relatedUserArguments = similarDocs
-        //             .filter(doc => doc.text !== userLastArgument)
-        //             .map(doc => doc.text);
-        //     }
-            
-        //     // --- RAG Implementation Ends Here ---
-
-        //     console.log(relatedUserArguments)
-
-            
-        //     const aiStance = debate.stance === 'for' ? 'against' : 'for';
-            
-        //     const prompt = generateDebateAiResponsePrompt({
-        //         topic: debate.topic,
-        //         aiStance,
-        //         userLastArgument,
-        //         aiLastArgument: lastAiMessage.text,
-        //         relatedUserArguments 
-        //     });
-
-        //     const aiResponse = await getGeminiResponse(prompt);
-        //     const embedding = await getEmbedding(aiResponse);
-
-        //     await Message.create({
-        //         debateId,
-        //         role: 'ai',
-        //         text: aiResponse,
-        //         embedding
-        //     });
-
-        //     debate.aiStatementCount += 1;
-        //     await debate.save();
-
-        //     res.status(200).json({ response: aiResponse });
-
-        // } catch (error) {
-        //     console.error("Error generating AI response:", error);
-        //     res.status(500).json({ message: "Failed to generate AI response." });
-        // }
         try {
         const { debateId, userLastArgument } = req.body;
 
@@ -315,3 +223,12 @@ export async function getAiResponse(req, res) {
     }
 }
 
+export async function getDebateHistory(req, res) {
+    try {
+        const { id } = req.params;
+        const messages = await Message.find({ debateId: id }).sort({ createdAt: 'asc' });
+        res.status(200).json(messages);
+    } catch (error) {
+        res.status(500).json({ message: "Failed to fetch debate history." });
+    }
+}

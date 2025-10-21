@@ -1,7 +1,6 @@
 import express from 'express'
 import protect from '../middleware/authMiddleware.js'
-import { addUserMessage, createDebate , getAiResponse, getDebateById, getDebatesForUser, getFirstAiArgument} from '../controllers/debateController.js'
-
+import { addUserMessage, createDebate , getAiResponse, getDebateById, getDebateHistory, getDebatesForUser, getFirstAiArgument} from '../controllers/debateController.js'
 
 const router = express.Router()
 
@@ -15,5 +14,6 @@ router.post("/addUserMessage", protect, addUserMessage);
 
 router.post("/getAiResponse", protect, getAiResponse);
 
+router.get("/history/:id", protect, getDebateHistory);
 
 export default router

@@ -28,11 +28,11 @@
 //                 headers: {
 //                     'Content-Type': 'application/json',
 //                 },
-//                 credentials : 'include',
+//                 credentials: 'include',
 //                 body: JSON.stringify({
 //                     title: debateTitle,
 //                     topic: debateTopic,
-//                     duration: debateDuration,
+//                     duration: parseInt(debateDuration), // Send duration as a number
 //                     stance: stance,
 //                 }),
 //             });
@@ -42,8 +42,9 @@
 //             }
 
 //             const data = await response.json();
+//             console.log(data)
 //             onClose(); // Close the modal
-//             navigate(`/debate/${data.debateId}`); // Navigate to the new debate page
+//             navigate(`/debate/${data._id}`); // Correctly navigate using _id
 
 //         } catch (error) {
 //             console.error("Error creating debate:", error);
@@ -113,7 +114,6 @@
 // };
 
 
-// // ... (The rest of DashboardPage.jsx remains unchanged) ...
 // // A reusable card component for the dashboard widgets
 // const DashboardCard = ({ children, className = '', isGlow = false }) => (
 //     <div className={`group bg-[#0A0A0A] border border-gray-900 rounded-2xl p-6 transition-all duration-300 hover:border-gray-800 hover:bg-[#111] hover:shadow-2xl hover:shadow-black transform hover:-translate-y-1 ${className} ${isGlow ? 'relative overflow-hidden' : ''}`}>
@@ -299,7 +299,7 @@
 
 
 // import React, { useState, useEffect, useRef } from 'react';
-// import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
+// import { Link, useNavigate } from 'react-router-dom';
 // import AnimateOnScroll from '../components/ui/AnimateOnScroll.jsx';
 // import DashboardHeader from '../components/layouts/DashboardHeader.jsx';
 // import DashboardFooter from '../components/layouts/DashboardFooter.jsx';
@@ -332,7 +332,7 @@
 //                 body: JSON.stringify({
 //                     title: debateTitle,
 //                     topic: debateTopic,
-//                     duration: parseInt(debateDuration), // Send duration as a number
+//                     duration: parseInt(debateDuration),
 //                     stance: stance,
 //                 }),
 //             });
@@ -342,12 +342,11 @@
 //             }
 
 //             const data = await response.json();
-//             onClose(); // Close the modal
-//             navigate(`/debate/${data.debateId}`); // Navigate to the new debate page
+//             onClose(); 
+//             navigate(`/debate/${data._id}`);
 
 //         } catch (error) {
 //             console.error("Error creating debate:", error);
-//             // Handle error state in UI if needed
 //         } finally {
 //             setIsLoading(false);
 //         }
@@ -364,7 +363,7 @@
 //             <div 
 //                 className="bg-[#0A0A0A] border border-gray-800 rounded-2xl p-8 w-full max-w-lg animate-fade-in-up"
 //                 style={{ animationDuration: '300ms' }}
-//                 onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
+//                 onClick={(e) => e.stopPropagation()}
 //             >
 //                 <div className="flex justify-between items-center mb-8">
 //                     <h2 className="text-3xl font-bold text-white">Configure Your Debate</h2>
@@ -413,7 +412,6 @@
 // };
 
 
-// // A reusable card component for the dashboard widgets
 // const DashboardCard = ({ children, className = '', isGlow = false }) => (
 //     <div className={`group bg-[#0A0A0A] border border-gray-900 rounded-2xl p-6 transition-all duration-300 hover:border-gray-800 hover:bg-[#111] hover:shadow-2xl hover:shadow-black transform hover:-translate-y-1 ${className} ${isGlow ? 'relative overflow-hidden' : ''}`}>
 //         {isGlow && <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] bg-[conic-gradient(from_180deg_at_50%_50%,#111_0deg,#333_90deg,#111_180deg,#333_270deg,#111_360deg)] animate-spin-slow opacity-10 group-hover:opacity-20 transition-opacity"></div>}
@@ -423,7 +421,6 @@
 //     </div>
 // );
 
-// // Animated number for stats
 // const AnimatedStat = ({ value, label, suffix = '' }) => {
 //     const [currentValue, setCurrentValue] = useState(0);
 //     const ref = useRef(null);
@@ -465,8 +462,6 @@
 //     );
 // };
 
-
-// // Simple SVG line chart
 // const ProgressChart = () => (
 //     <svg className="w-full h-20" viewBox="0 0 100 40" preserveAspectRatio="none">
 //         <path d="M 0 30 C 10 10, 20 10, 30 20 S 40 30, 50 25 S 60 20, 70 15 S 80 10, 90 20 S 100 30, 100 30" fill="none" stroke="url(#gradient)" strokeWidth="2" strokeLinecap="round"/>
@@ -480,7 +475,6 @@
 // );
 
 
-// // Icon components
 // const ChartBarIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M7 12h4v4H7z"/><path d="M12 8h4v8h-4z"/><path d="M17 4h4v12h-4z"/></svg> );
 // const HistoryIcon = () => ( <svg className="w-4 h-4 mr-3 text-gray-600 group-hover:text-gray-300 transition-colors" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg> );
 // const BoltIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> );
@@ -488,7 +482,36 @@
 
 // const DashboardPage = () => {
 //     const [isModalOpen, setIsModalOpen] = useState(false);
-//     const previousDebates = [ "The Ethics of Artificial Intelligence", "Climate Change: A Hoax or a Global Crisis?", "Capitalism vs. Socialism: Which is Superior?", "The Role of Government in a Free Society", "Universal Basic Income: A Viable Solution?", "Space Exploration: A Worthy Investment?", "The Future of Work in an Automated World", "Privacy in the Digital Age", ];
+//     const [debates, setDebates] = useState([]);
+//     const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+//     const [historyError, setHistoryError] = useState(null);
+
+//     useEffect(() => {
+//         const fetchDebateHistory = async () => {
+//             try {
+//                 setIsLoadingHistory(true);
+//                 setHistoryError(null);
+//                 const apiUrl = `${import.meta.env.VITE_BACKEND_URL}/debate/getAllDebates`;
+//                 const response = await fetch(apiUrl, {
+//                     method: 'POST', // As defined in your routes
+//                     headers: { 'Content-Type': 'application/json' },
+//                     credentials: 'include',
+//                 });
+
+//                 if (!response.ok) {
+//                     throw new Error('Failed to fetch debate history.');
+//                 }
+//                 const data = await response.json();
+//                 setDebates(data);
+//             } catch (error) {
+//                 setHistoryError(error.message);
+//             } finally {
+//                 setIsLoadingHistory(false);
+//             }
+//         };
+
+//         fetchDebateHistory();
+//     }, []);
 
 //     return (
 //         <div className="bg-black text-white min-h-screen flex flex-col font-sans">
@@ -500,16 +523,25 @@
 //                     <div className="flex-grow overflow-y-auto pr-2 relative [mask-image:linear-gradient(to_bottom,white_90%,transparent_100%)]">
 //                          <h2 className="text-base font-semibold text-gray-500 uppercase tracking-wider mb-3 px-2">Debate History</h2>
 //                          <input type="text" placeholder="Search history..." className="w-full bg-[#111] border border-gray-800 rounded-md px-3 py-2 text-lg mb-4 focus:ring-1 focus:ring-gray-600 focus:border-gray-600 outline-none transition-all"/>
-//                         <ul className="space-y-1">
-//                             {previousDebates.map((debate, index) => (
-//                                 <AnimateOnScroll key={index} stagger={index * 50}>
-//                                     <a href="#" className="group flex items-center text-lg text-gray-400 hover:text-white hover:bg-gray-900 rounded-md py-2 px-2 transition-colors truncate">
-//                                         <HistoryIcon />
-//                                         <span>{debate}</span>
-//                                     </a>
-//                                 </AnimateOnScroll>
-//                             ))}
-//                         </ul>
+                        
+//                         {isLoadingHistory ? (
+//                             <p className="text-gray-400 text-center">Loading history...</p>
+//                         ) : historyError ? (
+//                             <p className="text-red-500 text-center">{historyError}</p>
+//                         ) : debates.length > 0 ? (
+//                             <ul className="space-y-1">
+//                                 {debates.map((debate, index) => (
+//                                     <AnimateOnScroll key={debate._id} stagger={index * 50}>
+//                                         <Link to={`/debate/${debate._id}`} className="group flex items-center text-lg text-gray-400 hover:text-white hover:bg-gray-900 rounded-md py-2 px-2 transition-colors truncate">
+//                                             <HistoryIcon />
+//                                             <span>{debate.title}</span>
+//                                         </Link>
+//                                     </AnimateOnScroll>
+//                                 ))}
+//                             </ul>
+//                         ) : (
+//                             <p className="text-gray-500 text-center px-4">You have no debate history yet. Start a new debate to begin!</p>
+//                         )}
 //                     </div>
 //                 </aside>
 
@@ -596,7 +628,7 @@
 
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate
+import { Link, useNavigate } from 'react-router-dom';
 import AnimateOnScroll from '../components/ui/AnimateOnScroll.jsx';
 import DashboardHeader from '../components/layouts/DashboardHeader.jsx';
 import DashboardFooter from '../components/layouts/DashboardFooter.jsx';
@@ -629,7 +661,7 @@ const DebateModal = ({ isOpen, onClose }) => {
                 body: JSON.stringify({
                     title: debateTitle,
                     topic: debateTopic,
-                    duration: parseInt(debateDuration), // Send duration as a number
+                    duration: parseInt(debateDuration),
                     stance: stance,
                 }),
             });
@@ -639,13 +671,11 @@ const DebateModal = ({ isOpen, onClose }) => {
             }
 
             const data = await response.json();
-            console.log(data)
-            onClose(); // Close the modal
-            navigate(`/debate/${data._id}`); // Correctly navigate using _id
+            onClose(); 
+            navigate(`/debate/${data._id}`);
 
         } catch (error) {
             console.error("Error creating debate:", error);
-            // Handle error state in UI if needed
         } finally {
             setIsLoading(false);
         }
@@ -662,7 +692,7 @@ const DebateModal = ({ isOpen, onClose }) => {
             <div 
                 className="bg-[#0A0A0A] border border-gray-800 rounded-2xl p-8 w-full max-w-lg animate-fade-in-up"
                 style={{ animationDuration: '300ms' }}
-                onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
+                onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex justify-between items-center mb-8">
                     <h2 className="text-3xl font-bold text-white">Configure Your Debate</h2>
@@ -711,7 +741,6 @@ const DebateModal = ({ isOpen, onClose }) => {
 };
 
 
-// A reusable card component for the dashboard widgets
 const DashboardCard = ({ children, className = '', isGlow = false }) => (
     <div className={`group bg-[#0A0A0A] border border-gray-900 rounded-2xl p-6 transition-all duration-300 hover:border-gray-800 hover:bg-[#111] hover:shadow-2xl hover:shadow-black transform hover:-translate-y-1 ${className} ${isGlow ? 'relative overflow-hidden' : ''}`}>
         {isGlow && <div className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] bg-[conic-gradient(from_180deg_at_50%_50%,#111_0deg,#333_90deg,#111_180deg,#333_270deg,#111_360deg)] animate-spin-slow opacity-10 group-hover:opacity-20 transition-opacity"></div>}
@@ -721,7 +750,6 @@ const DashboardCard = ({ children, className = '', isGlow = false }) => (
     </div>
 );
 
-// Animated number for stats
 const AnimatedStat = ({ value, label, suffix = '' }) => {
     const [currentValue, setCurrentValue] = useState(0);
     const ref = useRef(null);
@@ -763,8 +791,6 @@ const AnimatedStat = ({ value, label, suffix = '' }) => {
     );
 };
 
-
-// Simple SVG line chart
 const ProgressChart = () => (
     <svg className="w-full h-20" viewBox="0 0 100 40" preserveAspectRatio="none">
         <path d="M 0 30 C 10 10, 20 10, 30 20 S 40 30, 50 25 S 60 20, 70 15 S 80 10, 90 20 S 100 30, 100 30" fill="none" stroke="url(#gradient)" strokeWidth="2" strokeLinecap="round"/>
@@ -778,7 +804,6 @@ const ProgressChart = () => (
 );
 
 
-// Icon components
 const ChartBarIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M7 12h4v4H7z"/><path d="M12 8h4v8h-4z"/><path d="M17 4h4v12h-4z"/></svg> );
 const HistoryIcon = () => ( <svg className="w-4 h-4 mr-3 text-gray-600 group-hover:text-gray-300 transition-colors" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg> );
 const BoltIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> );
@@ -786,7 +811,41 @@ const BoltIcon = () => ( <svg xmlns="http://www.w3.org/2000/svg" width="24" heig
 
 const DashboardPage = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const previousDebates = [ "The Ethics of Artificial Intelligence", "Climate Change: A Hoax or a Global Crisis?", "Capitalism vs. Socialism: Which is Superior?", "The Role of Government in a Free Society", "Universal Basic Income: A Viable Solution?", "Space Exploration: A Worthy Investment?", "The Future of Work in an Automated World", "Privacy in the Digital Age", ];
+    const [debates, setDebates] = useState([]);
+    const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+    const [historyError, setHistoryError] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    useEffect(() => {
+        const fetchDebateHistory = async () => {
+            try {
+                setIsLoadingHistory(true);
+                setHistoryError(null);
+                const apiUrl = `${import.meta.env.VITE_BACKEND_URL}/debate/getAllDebates`;
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch debate history.');
+                }
+                const data = await response.json();
+                setDebates(data);
+            } catch (error) {
+                setHistoryError(error.message);
+            } finally {
+                setIsLoadingHistory(false);
+            }
+        };
+
+        fetchDebateHistory();
+    }, []);
+
+    const filteredDebates = debates.filter(debate =>
+        debate.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     return (
         <div className="bg-black text-white min-h-screen flex flex-col font-sans">
@@ -797,17 +856,34 @@ const DashboardPage = () => {
                 <aside className="w-1/4 max-w-xs border-r border-gray-900 p-4 pt-10 flex-col flex-shrink-0 hidden md:flex">
                     <div className="flex-grow overflow-y-auto pr-2 relative [mask-image:linear-gradient(to_bottom,white_90%,transparent_100%)]">
                          <h2 className="text-base font-semibold text-gray-500 uppercase tracking-wider mb-3 px-2">Debate History</h2>
-                         <input type="text" placeholder="Search history..." className="w-full bg-[#111] border border-gray-800 rounded-md px-3 py-2 text-lg mb-4 focus:ring-1 focus:ring-gray-600 focus:border-gray-600 outline-none transition-all"/>
-                        <ul className="space-y-1">
-                            {previousDebates.map((debate, index) => (
-                                <AnimateOnScroll key={index} stagger={index * 50}>
-                                    <a href="#" className="group flex items-center text-lg text-gray-400 hover:text-white hover:bg-gray-900 rounded-md py-2 px-2 transition-colors truncate">
-                                        <HistoryIcon />
-                                        <span>{debate}</span>
-                                    </a>
-                                </AnimateOnScroll>
-                            ))}
-                        </ul>
+                         <input 
+                            type="text" 
+                            placeholder="Search history..." 
+                            className="w-full bg-[#111] border border-gray-800 rounded-md px-3 py-2 text-lg mb-4 focus:ring-1 focus:ring-gray-600 focus:border-gray-600 outline-none transition-all"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                         />
+                        
+                        {isLoadingHistory ? (
+                            <p className="text-gray-400 text-center">Loading history...</p>
+                        ) : historyError ? (
+                            <p className="text-red-500 text-center">{historyError}</p>
+                        ) : filteredDebates.length > 0 ? (
+                            <ul className="space-y-1">
+                                {filteredDebates.map((debate, index) => (
+                                    <AnimateOnScroll key={debate._id} stagger={index * 50}>
+                                        <Link to={`/debate/${debate._id}`} className="group flex items-center text-lg text-gray-400 hover:text-white hover:bg-gray-900 rounded-md py-2 px-2 transition-colors truncate">
+                                            <HistoryIcon />
+                                            <span>{debate.title}</span>
+                                        </Link>
+                                    </AnimateOnScroll>
+                                ))}
+                            </ul>
+                        ) : searchQuery ? (
+                             <p className="text-gray-500 text-center px-4">No debates found for "{searchQuery}".</p>
+                        ) : (
+                            <p className="text-gray-500 text-center px-4">You have no debate history yet. Start a new debate to begin!</p>
+                        )}
                     </div>
                 </aside>
 
@@ -890,4 +966,3 @@ const DashboardPage = () => {
 };
 
 export default DashboardPage;
-
