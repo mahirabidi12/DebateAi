@@ -19,7 +19,7 @@ const userSchema = mongoose.Schema({
   },
   password: {
     type: String,
-    required: true,
+    required: function() { return !this.googleId && !this.githubId; }
   },
   createdAt: {
     type: Date,
@@ -41,6 +41,16 @@ const userSchema = mongoose.Schema({
   //   type: [String],
   //   default: [],
   // },
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  githubId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
   analytics: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Analytics'

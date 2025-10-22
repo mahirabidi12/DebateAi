@@ -61,3 +61,25 @@ export function logout(req, res) {
     });
     res.status(200).json({ message: "Logged out successfully." });
 }
+
+
+
+export const googleCallback = async (req, res) => {
+    const token = await generateToken(req.user._id);
+    res.cookie("token", token, {
+      httpOnly: true,
+      sameSite: true,
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
+    res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
+};
+
+export const githubCallback = async (req, res) => {
+    const token = await generateToken(req.user._id);
+     res.cookie("token", token, {
+      httpOnly: true,
+      sameSite: true,
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
+    res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
+};

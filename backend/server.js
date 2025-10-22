@@ -6,6 +6,8 @@ import cors from "cors";
 import connectDb from './config/db.js'
 import authRouter from './routes/authRoutes.js'
 import debateRouter from './routes/debateRoutes.js'
+import session from 'express-session';
+import passport from './config/passport.js';
 
 dotenv.config()
 
@@ -19,11 +21,28 @@ app.use(
   })
 );
 
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true,
+        // secure: process.env.NODE_ENV === 'production',                 CONSIDER THIS CASE
+        maxAge: 1000 * 60 * 60 * 24 // 1 day
+    }
+}));
+
+
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+
 app.listen(process.env.PORT , () => {
     console.log(`Server is running on port ${process.env.PORT}`)
 })
 
 app.use("/auth" , authRouter)
-app.use("/debate" , debateRouter)
+app.use("/debate" , debateRouter) 
 
-connectDb()
+connectDb() 
