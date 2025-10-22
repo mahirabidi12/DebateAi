@@ -289,90 +289,255 @@ export async function getDebateTopics(req,res) {
 
 
 // --- NEW ANALYTICS FUNCTION ---
+
+// export async function analyzeDebate(req, res) {
+//     try {
+//         const { id: debateId } = req.params;
+//         const debate = await Debate.findById(debateId);
+
+//         if (!debate) {
+//             return res.status(404).json({ message: "Debate not found." });
+//         }
+//         if (debate.user.toString() !== req.user._id.toString()) {
+//             return res.status(403).json({ message: "User not authorized." });
+//         }
+
+//         // Prevent re-analyzing
+//         if (debate.analytics) {
+//             return res.status(200).json(debate.analytics);
+//         }
+
+//         const messages = await Message.find({ debateId }).sort({ createdAt: 'asc' });
+//         const transcript = messages.map(m => `${m.role === 'ai' ? 'AI' : 'User'}: ${m.text}`).join('\n\n');
+        
+//         console.log(transcript)
+//         const prompt = generateDebateAnalysisPrompt(transcript);
+//         const analysisResponse = await getGeminiResponse(prompt);
+//         console.log(analysisResponse)
+
+//         let analysisJson;
+//         try {
+//             const cleanedResponse = analysisResponse.replace(/```json\s*|\s*```/g, '').trim();
+//             analysisJson = JSON.parse(cleanedResponse);
+//         } catch (parseError) {
+//             console.error("Failed to parse analysis JSON:", parseError);
+//             throw new Error("AI returned an invalid analysis format.");
+//         }
+
+//         debate.analytics = analysisJson;
+//         await debate.save();
+
+//         // Update or create central analytics for the user
+//         let userAnalytics = await Analytics.findOne({ user: req.user._id });
+//         if (!userAnalytics) {
+//             userAnalytics = await Analytics.create({
+//                 user: req.user._id,
+//                 totalDebates: 0,
+//                 clarityScores: [],
+//                 concisenessScores: [],
+//                 relevanceScores: [],
+//             });
+//         }
+
+//         userAnalytics.totalDebates += 1;
+//         userAnalytics.clarityScores.push(analysisJson.clarityScore);
+//         userAnalytics.concisenessScores.push(analysisJson.concisenessScore);
+//         userAnalytics.relevanceScores.push(analysisJson.relevanceScore);
+        
+//         await userAnalytics.save();
+
+
+//         res.status(200).json(analysisJson);
+
+//     } catch (error) {
+//         console.error("Error analyzing debate:", error);
+//         if (error.message === 'GEMINI_MODEL_OVERLOADED') {
+//             return res.status(503).json({ message: "The AI model is currently overloaded. Please try again later." });
+//         }
+//         res.status(500).json({ message: "Failed to analyze debate." });
+//     }
+// }
+
+
+
+
+// export async function getOverallAnalytics(req, res) {
+//     try {
+//         let analytics = await Analytics.findOne({ user: req.user._id });
+//         if (!analytics) {
+//             // If no analytics doc exists, create a default one
+//             analytics = {
+//                 totalDebates: 0,
+//                 clarityScores: [],
+//                 concisenessScores: [],
+//                 relevanceScores: [],
+//             };
+//         }
+//         res.status(200).json(analytics);
+//     } catch (error) {
+//         console.error("Error fetching overall analytics:", error);
+//         res.status(500).json({ message: "Failed to fetch analytics." });
+//     }
+// }
+
+
+
 export async function analyzeDebate(req, res) {
-    try {
-        const { id: debateId } = req.params;
-        const debate = await Debate.findById(debateId);
+     try {
+         const { id: debateId } = req.params;
+         const debate = await Debate.findById(debateId);
 
-        if (!debate) {
-            return res.status(404).json({ message: "Debate not found." });
-        }
-        if (debate.user.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ message: "User not authorized." });
-        }
+         if (!debate) {
+             return res.status(404).json({ message: "Debate not found." });
+         }
+         if (debate.user.toString() !== req.user._id.toString()) {
+             return res.status(403).json({ message: "User not authorized." });
+         }
 
-        // Prevent re-analyzing
-        if (debate.analytics) {
-            return res.status(200).json(debate.analytics);
-        }
+         // Prevent re-analyzing if already done
+         if (debate.analytics && debate.analytics.summary) { // Check if summary exists as a marker
+             console.log(`Analysis already exists for debate ${debateId}`);
+             return res.status(200).json(debate.analytics);
+         }
 
-        const messages = await Message.find({ debateId }).sort({ createdAt: 'asc' });
-        const transcript = messages.map(m => `${m.role === 'ai' ? 'AI' : 'User'}: ${m.text}`).join('\n\n');
-        
-        console.log(transcript)
-        const prompt = generateDebateAnalysisPrompt(transcript);
-        const analysisResponse = await getGeminiResponse(prompt);
-        console.log(analysisResponse)
+         const messages = await Message.find({ debateId }).sort({ createdAt: 'asc' });
+         // Ensure there are messages to analyze
+         if (messages.length === 0) {
+              console.log(`No messages found for debate ${debateId}, cannot analyze.`);
+              // Optionally save a minimal analytics object indicating no analysis was possible
+              debate.analytics = { summary: "No arguments were made in this debate.", fallacyCount: 0 };
+              await debate.save();
+              return res.status(200).json(debate.analytics);
+         }
 
-        let analysisJson;
-        try {
-            const cleanedResponse = analysisResponse.replace(/```json\s*|\s*```/g, '').trim();
-            analysisJson = JSON.parse(cleanedResponse);
-        } catch (parseError) {
-            console.error("Failed to parse analysis JSON:", parseError);
-            throw new Error("AI returned an invalid analysis format.");
-        }
+         const transcript = messages.map(m => `${m.role === 'ai' ? 'AI' : 'User'}: ${m.text}`).join('\n\n');
 
-        debate.analytics = analysisJson;
-        await debate.save();
+         console.log(`Transcript for analysis (Debate ${debateId}):\n${transcript.substring(0, 300)}...`); // Log start of transcript
 
-        // Update or create central analytics for the user
-        let userAnalytics = await Analytics.findOne({ user: req.user._id });
-        if (!userAnalytics) {
-            userAnalytics = await Analytics.create({
-                user: req.user._id,
-                totalDebates: 0,
-                clarityScores: [],
-                concisenessScores: [],
-                relevanceScores: [],
-            });
-        }
+         const prompt = generateDebateAnalysisPrompt(transcript);
+         const analysisResponse = await getGeminiResponse(prompt);
+         console.log(`Raw analysis response for debate ${debateId}:\n${analysisResponse}`); // Log raw response
 
-        userAnalytics.totalDebates += 1;
-        userAnalytics.clarityScores.push(analysisJson.clarityScore);
-        userAnalytics.concisenessScores.push(analysisJson.concisenessScore);
-        userAnalytics.relevanceScores.push(analysisJson.relevanceScore);
-        
-        await userAnalytics.save();
+         let analysisJson;
+         try {
+             // Attempt to clean and parse the JSON response
+             const cleanedResponse = analysisResponse.replace(/^```json\s*|\s*```$/g, '').trim();
+             analysisJson = JSON.parse(cleanedResponse);
+
+             // Basic validation
+             if (typeof analysisJson.clarityScore !== 'number' ||
+                 typeof analysisJson.concisenessScore !== 'number' ||
+                 typeof analysisJson.relevanceScore !== 'number' ||
+                 typeof analysisJson.argumentStrengthScore !== 'number' ||
+                 typeof analysisJson.evidenceUsageScore !== 'number' ||
+                 typeof analysisJson.rebuttalEffectivenessScore !== 'number' ||
+                 typeof analysisJson.fallacyCount !== 'number' ||
+                 !Array.isArray(analysisJson.strengths) ||
+                 !Array.isArray(analysisJson.areasForImprovement) ||
+                 !Array.isArray(analysisJson.logicalFallacies) ||
+                 typeof analysisJson.summary !== 'string') {
+                 throw new Error("Parsed JSON structure is invalid.");
+             }
+
+         } catch (parseError) {
+             console.error(`Failed to parse analysis JSON for debate ${debateId}:`, parseError, "Raw response:", analysisResponse);
+             // Provide a default error analysis object
+             analysisJson = {
+                 clarityScore: 0, concisenessScore: 0, relevanceScore: 0,
+                 argumentStrengthScore: 0, evidenceUsageScore: 0, rebuttalEffectivenessScore: 0,
+                 strengths: [], areasForImprovement: [], logicalFallacies: [], fallacyCount: 0,
+                 summary: "Error: Could not automatically analyze this debate due to an unexpected format from the AI analyzer."
+             };
+              // Still save this error state to the debate
+             debate.analytics = analysisJson;
+             await debate.save();
+             // Return 500 but still send the error JSON
+             return res.status(500).json({ message: "Failed to parse analysis from AI.", analysis: analysisJson });
+         }
+
+         // Save the parsed analysis to the specific debate
+         debate.analytics = analysisJson;
+         await debate.save();
+         console.log(`Successfully saved analysis for debate ${debateId}`);
 
 
-        res.status(200).json(analysisJson);
+         // Update or create central analytics for the user
+         let userAnalytics = await Analytics.findOne({ user: req.user._id });
+         if (!userAnalytics) {
+             userAnalytics = await Analytics.create({
+                 user: req.user._id,
+                 totalDebates: 0,
+                 clarityScores: [], concisenessScores: [], relevanceScores: [],
+                 argumentStrengthScores: [], evidenceUsageScores: [], rebuttalEffectivenessScores: [],
+                 fallacyCounts: [], debateDates: []
+             });
+             console.log(`Created new central analytics for user ${req.user._id}`);
+         }
 
-    } catch (error) {
-        console.error("Error analyzing debate:", error);
-        if (error.message === 'GEMINI_MODEL_OVERLOADED') {
-            return res.status(503).json({ message: "The AI model is currently overloaded. Please try again later." });
-        }
-        res.status(500).json({ message: "Failed to analyze debate." });
-    }
-}
+         // Check if this debate analysis was already added to prevent duplicates
+         // We can use the debate creation date as a pseudo-unique identifier here
+         const debateDateExists = userAnalytics.debateDates.some(
+              date => date.getTime() === debate.createdAt.getTime()
+         );
+
+         if (!debateDateExists) {
+             userAnalytics.totalDebates += 1;
+             userAnalytics.clarityScores.push(analysisJson.clarityScore);
+             userAnalytics.concisenessScores.push(analysisJson.concisenessScore);
+             userAnalytics.relevanceScores.push(analysisJson.relevanceScore);
+             userAnalytics.argumentStrengthScores.push(analysisJson.argumentStrengthScore);
+             userAnalytics.evidenceUsageScores.push(analysisJson.evidenceUsageScore);
+             userAnalytics.rebuttalEffectivenessScores.push(analysisJson.rebuttalEffectivenessScore);
+             userAnalytics.fallacyCounts.push(analysisJson.fallacyCount);
+             userAnalytics.debateDates.push(debate.createdAt); // Store the date
+
+             await userAnalytics.save();
+             console.log(`Updated central analytics for user ${req.user._id} with debate ${debateId}`);
+         } else {
+              console.log(`Debate ${debateId} analysis already included in central analytics for user ${req.user._id}. Skipping update.`);
+         }
+
+
+         res.status(200).json(analysisJson);
+
+     } catch (error) {
+         console.error(`Error in analyzeDebate for debate ${req.params.id}:`, error);
+         if (error.message === 'GEMINI_MODEL_OVERLOADED') {
+             return res.status(503).json({ message: "The AI model is currently overloaded. Analysis may take longer or fail. Please try again later." });
+         }
+         res.status(500).json({ message: `Failed to analyze debate: ${error.message}` });
+     }
+ }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 export async function getOverallAnalytics(req, res) {
-    try {
-        let analytics = await Analytics.findOne({ user: req.user._id });
-        if (!analytics) {
-            // If no analytics doc exists, create a default one
-            analytics = {
-                totalDebates: 0,
-                clarityScores: [],
-                concisenessScores: [],
-                relevanceScores: [],
-            };
-        }
-        res.status(200).json(analytics);
-    } catch (error) {
-        console.error("Error fetching overall analytics:", error);
-        res.status(500).json({ message: "Failed to fetch analytics." });
-    }
-}
+     try {
+         let analytics = await Analytics.findOne({ user: req.user._id });
+         if (!analytics) {
+             // If no analytics doc exists, return a default structure
+             analytics = {
+                 totalDebates: 0,
+                 clarityScores: [], concisenessScores: [], relevanceScores: [],
+                 argumentStrengthScores: [], evidenceUsageScores: [], rebuttalEffectivenessScores: [],
+                 fallacyCounts: [], debateDates: []
+             };
+         }
+         res.status(200).json(analytics);
+     } catch (error) {
+         console.error("Error fetching overall analytics:", error);
+         res.status(500).json({ message: "Failed to fetch analytics." });
+     }
+ }

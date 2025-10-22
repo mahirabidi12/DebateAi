@@ -85,27 +85,70 @@ CRITICAL INSTRUCTION: Your final output must be **ONLY** a valid JSON array of s
   `;
 }
 
+
+
+
+
+// export function generateDebateAnalysisPrompt(debateTranscript) {
+//   return `
+// You are an expert debate coach and analyst. Your task is to provide a detailed, objective analysis of a user's performance in a one-on-one debate against an AI.
+
+// The full transcript of the debate is provided below:
+// ---
+// ${debateTranscript}
+// ---
+
+// Analyze the user's performance based **only** on their statements in the transcript.
+
+// Your analysis must be structured as a valid JSON object with the following specific keys and value types:
+
+// - "clarityScore": A number (integer or float) from 1 to 10 representing the clarity and coherence of the user's arguments.
+// - "concisenessScore": A number (integer or float) from 1 to 10, rating how effectively the user made their points without unnecessary fluff.
+// - "relevanceScore": A number (integer or float) from 1 to 10, assessing how well the user's arguments stayed on topic.
+// - "strengths": An array of 2-3 strings, each describing a key strength in the user's performance (e.g., "Good use of rhetorical questions," "Strong opening statement").
+// - "areasForImprovement": An array of 2-3 strings, each providing a constructive suggestion for improvement (e.g., "Could provide more specific evidence," "Tendency to repeat points").
+// - "logicalFallacies": An array of objects. For each fallacy committed by the user, provide an object with "fallacy" (the name of the fallacy, e.g., "Ad Hominem"), "quote" (the exact user quote containing the fallacy), and "explanation" (a brief explanation of why it's a fallacy). If no fallacies are found, this should be an empty array.
+// - "summary": A brief, one-paragraph summary of the user's overall performance and debate strategy.
+
+// CRITICAL INSTRUCTION: Your final output must be **ONLY** the valid JSON object, with no other text, explanation, or markdown formatting.
+//   `;
+// }
+
+
 export function generateDebateAnalysisPrompt(debateTranscript) {
-  return `
-You are an expert debate coach and analyst. Your task is to provide a detailed, objective analysis of a user's performance in a one-on-one debate against an AI.
+   return `
+ You are an expert debate coach and analyst. Your task is to provide a detailed, objective analysis of a user's performance in a one-on-one debate against an AI.
 
-The full transcript of the debate is provided below:
----
-${debateTranscript}
----
+ The full transcript of the debate is provided below:
+ ---
+ ${debateTranscript}
+ ---
 
-Analyze the user's performance based **only** on their statements in the transcript.
+ Analyze the user's performance based **only** on their statements in the transcript. Evaluate the following aspects on a scale of 1 to 10:
 
-Your analysis must be structured as a valid JSON object with the following specific keys and value types:
+ 1.  **Clarity:** How clear and easy to understand were the user's arguments? (1=very unclear, 10=crystal clear)
+ 2.  **Conciseness:** Did the user make points efficiently without unnecessary rambling? (1=very rambling, 10=very concise)
+ 3.  **Relevance:** How well did the user's arguments stay focused on the debate topic and respond to the opponent? (1=mostly irrelevant, 10=highly relevant)
+ 4.  **Argument Strength:** How logical, well-reasoned, and persuasive were the user's core arguments? (1=very weak, 10=very strong)
+ 5.  **Evidence Usage:** How effectively did the user incorporate facts, examples, or evidence (even if hypothetical)? (1=no evidence, 10=excellent use of evidence)
+ 6.  **Rebuttal Effectiveness:** How well did the user address and counter the AI's points? (1=ignored opponent, 10=excellent rebuttal)
 
-- "clarityScore": A number (integer or float) from 1 to 10 representing the clarity and coherence of the user's arguments.
-- "concisenessScore": A number (integer or float) from 1 to 10, rating how effectively the user made their points without unnecessary fluff.
-- "relevanceScore": A number (integer or float) from 1 to 10, assessing how well the user's arguments stayed on topic.
-- "strengths": An array of 2-3 strings, each describing a key strength in the user's performance (e.g., "Good use of rhetorical questions," "Strong opening statement").
-- "areasForImprovement": An array of 2-3 strings, each providing a constructive suggestion for improvement (e.g., "Could provide more specific evidence," "Tendency to repeat points").
-- "logicalFallacies": An array of objects. For each fallacy committed by the user, provide an object with "fallacy" (the name of the fallacy, e.g., "Ad Hominem"), "quote" (the exact user quote containing the fallacy), and "explanation" (a brief explanation of why it's a fallacy). If no fallacies are found, this should be an empty array.
-- "summary": A brief, one-paragraph summary of the user's overall performance and debate strategy.
+ Also, identify key strengths, areas for improvement, and any logical fallacies committed by the user.
 
-CRITICAL INSTRUCTION: Your final output must be **ONLY** the valid JSON object, with no other text, explanation, or markdown formatting.
-  `;
-}
+ Your analysis must be structured as a valid JSON object with the following specific keys and value types:
+
+ - "clarityScore": A number (integer or float, 1-10) for Clarity.
+ - "concisenessScore": A number (integer or float, 1-10) for Conciseness.
+ - "relevanceScore": A number (integer or float, 1-10) for Relevance.
+ - "argumentStrengthScore": A number (integer or float, 1-10) for Argument Strength.
+ - "evidenceUsageScore": A number (integer or float, 1-10) for Evidence Usage.
+ - "rebuttalEffectivenessScore": A number (integer or float, 1-10) for Rebuttal Effectiveness.
+ - "strengths": An array of 2-3 strings describing key strengths.
+ - "areasForImprovement": An array of 2-3 strings suggesting improvements.
+ - "logicalFallacies": An array of objects. For each fallacy, include "fallacy" (name), "quote" (user quote), and "explanation". Empty array if none.
+ - "fallacyCount": A number (integer) representing the total count of logical fallacies identified.
+ - "summary": A brief, one-paragraph summary of overall performance.
+
+ CRITICAL INSTRUCTION: Your final output must be **ONLY** the valid JSON object, with no other text, explanation, or markdown formatting. Ensure all scores are between 1 and 10.
+   `;
+ }
