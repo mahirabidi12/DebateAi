@@ -70,8 +70,9 @@ export const googleCallback = async (req, res) => {
     const token = await generateToken(req.user._id);
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: true,
+      sameSite: 'None', 
       maxAge: 30 * 24 * 60 * 60 * 1000,
+      secure: true 
     });
     res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
 };
@@ -80,7 +81,8 @@ export const githubCallback = async (req, res) => {
     const token = await generateToken(req.user._id);
      res.cookie("token", token, {
       httpOnly: true,
-      sameSite: true,
+      sameSite: 'None', 
+      secure: true ,
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
     res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
