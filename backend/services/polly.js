@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Configure the AWS Polly client
+
 const pollyClient = new PollyClient({
   region: process.env.AWS_REGION,
   credentials: {
@@ -32,10 +32,10 @@ const streamToBuffer = (stream) =>
  */
 export async function generateSpeech(text) {
   const command = new SynthesizeSpeechCommand({
-    Engine: "neural", // Use the higher quality neural engine
+    Engine: "neural", 
     OutputFormat: "mp3",
     Text: text,
-    VoiceId: "Matthew", // A clear, standard male voice. Others: Joanna, Amy, Brian
+    VoiceId: "Matthew",
   });
 
   try {

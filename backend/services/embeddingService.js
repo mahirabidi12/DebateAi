@@ -1,38 +1,3 @@
-// import dotenv from "dotenv";
-// dotenv.config();
-
-// export async function getEmbedding(texts) {
-//   try {
-//     const body = {
-//       input: texts,
-//       model: "nvidia/llama-3.2-nemoretriever-300m-embed-v2",
-//       input_type: "query",
-//       encoding_format: "float",
-//     };
-//     const headers = {
-//       Authorization: `Bearer ${process.env.NVIDIA_API_KEY}`,
-//       Accept: "application/json",
-//       "Content-Type": "application/json",
-//     };
-
-//     const response = await fetch(process.env.NVIDIA_API_URL, {
-//       method: "POST",
-//       headers: headers,
-//       body: JSON.stringify(body),
-//     });
-
-//     const result = await response.json();
-//     // console.log(result)
-//     const data =result.data.map((item) => item.embedding);
-//     console.log(data)
-//     return data
-//   } catch (error) {
-//     console.error(`Error in getEmbedding function: ${error.message}`);
-//     throw new Error("Failed to get embeddings from NVIDIA.");
-//   }
-// }
-
-
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -50,7 +15,7 @@ export async function getEmbedding(text, inputType = 'passage') {
     throw new Error("NVIDIA API credentials must be set in the .env file.");
   }
 
-  // Ensure the input to the API is always an array
+
   const texts = Array.isArray(text) ? text : [text];
 
   try {
@@ -76,8 +41,7 @@ export async function getEmbedding(text, inputType = 'passage') {
     const result = await response.json();
     const embeddings = result.data.map((item) => item.embedding);
 
-    // If the original input was a single string, return only the first embedding array (the flat vector).
-    // Otherwise, return the full array of embeddings.
+
     return Array.isArray(text) ? embeddings : embeddings[0];
 
   } catch (error) {

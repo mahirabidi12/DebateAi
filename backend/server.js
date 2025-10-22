@@ -16,8 +16,8 @@ app.use(express.urlencoded({extended : true}))
 app.use(cookieParser())
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL, // your frontend URL
-    credentials: true, // if using cookies or authorization headers
+    origin: process.env.FRONTEND_URL, 
+    credentials: true, 
   })
 );
 
@@ -27,7 +27,7 @@ app.use(session({
     saveUninitialized: false,
     cookie: {
         httpOnly: true,
-        // secure: process.env.NODE_ENV === 'production',                 CONSIDER THIS CASE
+        // secure: process.env.NODE_ENV === 'production',                 REMEMBER
         maxAge: 1000 * 60 * 60 * 24 // 1 day
     }
 }));
@@ -44,5 +44,9 @@ app.listen(process.env.PORT , () => {
 
 app.use("/auth" , authRouter)
 app.use("/debate" , debateRouter) 
+
+ app.get("/health", (req, res) => {
+   res.status(200).json({ status: "OK", message: "Server is healthy" });
+ });
 
 connectDb() 

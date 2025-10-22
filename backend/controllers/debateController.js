@@ -89,7 +89,6 @@ export async function getFirstAiArgument(req, res) {
 
         console.log(embedding)
 
-        // Save the AI's first message to the database
         await Message.create({
             debateId: debateId,
             role: 'ai',
@@ -97,7 +96,7 @@ export async function getFirstAiArgument(req, res) {
             embedding: embedding,
         });
 
-        // Increment the AI statement count in the debate document
+
         debate.aiStatementCount += 1;
         await debate.save();
         
@@ -167,20 +166,20 @@ export async function getAiResponse(req, res) {
             return res.status(404).json({ message: "Could not find previous AI argument." });
         }
 
-        // --- RAG Implementation Starts Here ---
+
         
-        // Get embedding for the user's current argument to use in the search
+
         const queryEmbedding = await getEmbedding(userLastArgument);
 
-        // Always perform the vector search. The JS filter below will handle the results.
+
         const similarDocs = await Message.aggregate([
             {
                 $vectorSearch: {
-                    index: 'vector_index_2', // This MUST match the name of the index you created in Atlas
+                    index: 'vector_index_2',
                     path: 'embedding',
                     queryVector: queryEmbedding,
                     numCandidates: 15,
-                    limit: 4, // Fetch 4 to have a better chance of getting 3 *other* arguments
+                    limit: 4, 
                     filter: {
                         debateId: new mongoose.Types.ObjectId(debateId),
                         role: 'user'
@@ -196,13 +195,13 @@ export async function getAiResponse(req, res) {
             }
         ]);
 
-        // Filter out the *exact* same message from the results and take the top 3
+
         const relatedUserArguments = similarDocs
             .filter(doc => doc.text !== userLastArgument)
-            .slice(0, 3) // Ensure we only take up to 3 related arguments
+            .slice(0, 3) 
             .map(doc => doc.text);
         
-        // --- RAG Implementation Ends Here ---
+
 
         console.log("Found related user arguments:", relatedUserArguments);
         
@@ -266,7 +265,7 @@ export async function getDebateTopics(req,res) {
             response = jsonMatch[1];
         }
 
-        // Further cleanup for any remaining non-JSON characters
+
         response = response.trim();
         if (response.startsWith('`')) {
             response = response.replace(/`/g, '');
@@ -394,17 +393,17 @@ export async function analyzeDebate(req, res) {
              return res.status(403).json({ message: "User not authorized." });
          }
 
-         // Prevent re-analyzing if already done
-         if (debate.analytics && debate.analytics.summary) { // Check if summary exists as a marker
+
+         if (debate.analytics && debate.analytics.summary) { 
              console.log(`Analysis already exists for debate ${debateId}`);
              return res.status(200).json(debate.analytics);
          }
 
          const messages = await Message.find({ debateId }).sort({ createdAt: 'asc' });
-         // Ensure there are messages to analyze
+
          if (messages.length === 0) {
               console.log(`No messages found for debate ${debateId}, cannot analyze.`);
-              // Optionally save a minimal analytics object indicating no analysis was possible
+
               debate.analytics = { summary: "No arguments were made in this debate.", fallacyCount: 0 };
               await debate.save();
               return res.status(200).json(debate.analytics);
@@ -412,15 +411,15 @@ export async function analyzeDebate(req, res) {
 
          const transcript = messages.map(m => `${m.role === 'ai' ? 'AI' : 'User'}: ${m.text}`).join('\n\n');
 
-         console.log(`Transcript for analysis (Debate ${debateId}):\n${transcript.substring(0, 300)}...`); // Log start of transcript
+         console.log(`Transcript for analysis (Debate ${debateId}):\n${transcript.substring(0, 300)}...`); 
 
          const prompt = generateDebateAnalysisPrompt(transcript);
          const analysisResponse = await getGeminiResponse(prompt);
-         console.log(`Raw analysis response for debate ${debateId}:\n${analysisResponse}`); // Log raw response
+         console.log(`Raw analysis response for debate ${debateId}:\n${analysisResponse}`); 
 
          let analysisJson;
          try {
-             // Attempt to clean and parse the JSON response
+
              const cleanedResponse = analysisResponse.replace(/^```json\s*|\s*```$/g, '').trim();
              analysisJson = JSON.parse(cleanedResponse);
 
@@ -441,27 +440,27 @@ export async function analyzeDebate(req, res) {
 
          } catch (parseError) {
              console.error(`Failed to parse analysis JSON for debate ${debateId}:`, parseError, "Raw response:", analysisResponse);
-             // Provide a default error analysis object
+
              analysisJson = {
                  clarityScore: 0, concisenessScore: 0, relevanceScore: 0,
                  argumentStrengthScore: 0, evidenceUsageScore: 0, rebuttalEffectivenessScore: 0,
                  strengths: [], areasForImprovement: [], logicalFallacies: [], fallacyCount: 0,
                  summary: "Error: Could not automatically analyze this debate due to an unexpected format from the AI analyzer."
              };
-              // Still save this error state to the debate
+
              debate.analytics = analysisJson;
              await debate.save();
-             // Return 500 but still send the error JSON
+
              return res.status(500).json({ message: "Failed to parse analysis from AI.", analysis: analysisJson });
          }
 
-         // Save the parsed analysis to the specific debate
+
          debate.analytics = analysisJson;
          await debate.save();
          console.log(`Successfully saved analysis for debate ${debateId}`);
 
 
-         // Update or create central analytics for the user
+
          let userAnalytics = await Analytics.findOne({ user: req.user._id });
          if (!userAnalytics) {
              userAnalytics = await Analytics.create({
@@ -474,8 +473,8 @@ export async function analyzeDebate(req, res) {
              console.log(`Created new central analytics for user ${req.user._id}`);
          }
 
-         // Check if this debate analysis was already added to prevent duplicates
-         // We can use the debate creation date as a pseudo-unique identifier here
+
+
          const debateDateExists = userAnalytics.debateDates.some(
               date => date.getTime() === debate.createdAt.getTime()
          );
@@ -489,7 +488,7 @@ export async function analyzeDebate(req, res) {
              userAnalytics.evidenceUsageScores.push(analysisJson.evidenceUsageScore);
              userAnalytics.rebuttalEffectivenessScores.push(analysisJson.rebuttalEffectivenessScore);
              userAnalytics.fallacyCounts.push(analysisJson.fallacyCount);
-             userAnalytics.debateDates.push(debate.createdAt); // Store the date
+             userAnalytics.debateDates.push(debate.createdAt); 
 
              await userAnalytics.save();
              console.log(`Updated central analytics for user ${req.user._id} with debate ${debateId}`);

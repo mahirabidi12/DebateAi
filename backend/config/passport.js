@@ -32,15 +32,15 @@ passport.use(
         let user = await User.findOne({ googleId: profile.id });
 
         if (!user) {
-          // If user doesn't exist, check if there's an account with the same email
+
           user = await User.findOne({ email: profile.emails[0].value });
 
           if (user) {
-            // Link account
+
             user.googleId = profile.id;
             await user.save();
           } else {
-            // Create a new user
+
             const newUser = new User({
               googleId: profile.id,
               name: profile.displayName,
@@ -58,7 +58,7 @@ passport.use(
   )
 );
 
-// GitHub Strategy
+
 passport.use(
   new GitHubStrategy(
     {

@@ -4,10 +4,10 @@ const analysisSchema = new mongoose.Schema({
     clarityScore: Number,
     concisenessScore: Number,
     relevanceScore: Number,
-    argumentStrengthScore: Number,    // New
-     evidenceUsageScore: Number,       // New
-     rebuttalEffectivenessScore: Number, // New
-     fallacyCount: Number,             // New - Store count for this debate
+    argumentStrengthScore: Number,    
+     evidenceUsageScore: Number,       
+     rebuttalEffectivenessScore: Number, 
+     fallacyCount: Number,             
     strengths: [String],
     areasForImprovement: [String],
     logicalFallacies: [{

@@ -11,13 +11,11 @@ const analyticsSchema = new mongoose.Schema({
     clarityScores: [{ type: Number }],
     concisenessScores: [{ type: Number }],
     relevanceScores: [{ type: Number }],
-    // You can add more aggregated fields here later, like average scores
-    argumentStrengthScores: [{ type: Number }], // New
-     evidenceUsageScores: [{ type: Number }],    // New
-     rebuttalEffectivenessScores: [{ type: Number }], // New
-     fallacyCounts: [{ type: Number }],          // New - Store count per debate
-     // Add timestamps for trend charting
-     debateDates: [{ type: Date }],              // New
+    argumentStrengthScores: [{ type: Number }], 
+     evidenceUsageScores: [{ type: Number }],    
+     rebuttalEffectivenessScores: [{ type: Number }], 
+     fallacyCounts: [{ type: Number }],          
+     debateDates: [{ type: Date }],              
 });
 
 const Analytics = mongoose.model("Analytics", analyticsSchema);

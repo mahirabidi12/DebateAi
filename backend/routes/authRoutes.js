@@ -14,11 +14,11 @@ router.get("/test" ,protect,(req,res) => {
 router.post("/logout", logout);
 
 
-// Google OAuth
+
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 router.get('/google/callback', passport.authenticate('google', { failureRedirect: '/login' }), googleCallback);
 
-// GitHub OAuth
+
 router.get('/github', passport.authenticate('github', { scope: ['user:email'] }));
 router.get('/github/callback', passport.authenticate('github', { failureRedirect: '/login' }), githubCallback);
 
