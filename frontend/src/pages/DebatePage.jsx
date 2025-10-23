@@ -2,24 +2,23 @@
  import { useParams, useNavigate } from 'react-router-dom';
  import DashboardHeader from '../components/layouts/DashboardHeader'; // Corrected path
 
- // --- Audio Player Hook ---
+
  const useAudioPlayer = () => {
      const audioRef = useRef(null);
      const [isPlaying, setIsPlaying] = useState(false);
-     const [currentAudioSrc, setCurrentAudioSrc] = useState(null); // Keep track of the current audio source
+     const [currentAudioSrc, setCurrentAudioSrc] = useState(null); 
 
-     // Function to stop audio safely
+
      const stopAudio = useCallback(() => {
          if (audioRef.current) {
              console.log("Stopping audio:", audioRef.current.src.substring(0, 30));
              audioRef.current.pause();
-             audioRef.current.currentTime = 0; // Reset time
-             // Remove listeners to prevent memory leaks if audio ends after stop is called
+             audioRef.current.currentTime = 0; 
              audioRef.current.onended = null;
              audioRef.current.onerror = null;
-             audioRef.current = null; // Clear the ref
+             audioRef.current = null; 
          }
-         // Only update state if it's currently true, prevents unnecessary re-renders
+
          setIsPlaying(current => {
             if (current) {
                 setCurrentAudioSrc(null); // Reset source on stop
@@ -27,14 +26,13 @@
             }
             return current;
          });
-     }, []); // No dependencies needed for stopAudio
+     }, []); 
 
-     // Helper function to create and play audio instance (defined outside playAudio for clarity)
+    
      const createAndPlayAudio = useCallback((audioSrc) => {
          console.log("Playing audio:", audioSrc.substring(0, 30) + "...");
-         // Ensure any lingering ref is cleared if state says not playing
          if (!isPlaying && audioRef.current) {
-            stopAudio(); // Call stopAudio to ensure state consistency
+            stopAudio(); 
          }
 
          const newAudio = new Audio(audioSrc);
@@ -44,15 +42,12 @@
          newAudio.onended = () => {
              console.log("Audio ended.");
              setIsPlaying(false);
-             // Clear ref only on natural end to allow replay
-             // audioRef.current = null; // Keep ref for potential replay
              setCurrentAudioSrc(null);
          };
          newAudio.onerror = (e) => {
              console.error("Audio playback error:", e);
              setIsPlaying(false);
              setCurrentAudioSrc(null);
-             // Clear the ref on error
              audioRef.current = null;
          };
 
@@ -67,42 +62,39 @@
                  } else {
                      console.error("Audio playback failed:", e);
                  }
-                 // Ensure state is correct even if play fails
+
                  setIsPlaying(false);
                  setCurrentAudioSrc(null);
-                 audioRef.current = null; // Clear ref on play error
+                 audioRef.current = null; 
              });
-     // Need isPlaying and stopAudio as dependencies here because it uses them
+
      }, [isPlaying, stopAudio]);
 
      const playAudio = useCallback((base64Audio) => {
          const audioSrc = `data:audio/mp3;base64,${base64Audio}`;
 
-         // If different audio is requested, stop the current one first.
+
          if (audioRef.current && currentAudioSrc !== audioSrc) {
              console.log("Stopping previous audio to play new one.");
-             stopAudio(); // stopAudio will reset state
-             // Need a slight delay to ensure state updates before creating new audio
+             stopAudio(); 
              setTimeout(() => createAndPlayAudio(audioSrc), 50);
-             return; // Exit early
+             return; 
          }
 
-         // If the requested audio is already playing, do nothing
+
          if (isPlaying && currentAudioSrc === audioSrc) {
              console.log("Audio already playing.");
              return;
          }
 
-         // If the same audio is requested but not playing (e.g., replay), play it.
-         // Or if it's a new audio source.
           if (!isPlaying || currentAudioSrc !== audioSrc) {
              createAndPlayAudio(audioSrc);
          }
 
-     }, [isPlaying, currentAudioSrc, stopAudio, createAndPlayAudio]); // Add createAndPlayAudio dependency
+     }, [isPlaying, currentAudioSrc, stopAudio, createAndPlayAudio]); 
 
 
-     // Cleanup on unmount
+
      useEffect(() => {
          return () => {
              console.log("Cleaning up audio player on unmount.");
@@ -115,23 +107,23 @@
  };
 
 
- // --- UI Helper Components ---
+
  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
  let recognition;
  if (SpeechRecognition) {
      try {
          recognition = new SpeechRecognition();
-         recognition.continuous = true; // Keep listening even after pauses
+         recognition.continuous = true; 
          recognition.lang = 'en-US';
-         recognition.interimResults = true; // Get interim results for potential future UI feedback
+         recognition.interimResults = true;
          recognition.maxAlternatives = 1;
      } catch (e) {
          console.error("Speech Recognition setup failed:", e);
-         recognition = null; // Ensure recognition is null if setup fails
+         recognition = null;
      }
  }
 
- // Corrected MessageContent - Pass isAnyAudioPlaying prop
+
  const MessageContent = ({ text, onReplay, isAudioPlayingNow, isAnyAudioPlaying }) => {
      const safeText = typeof text === 'string' ? text : '';
      const paragraphs = safeText.split('\n').map((p, i) => <p key={i} className="text-lg mb-4 last:mb-0">{p}</p>);
@@ -141,7 +133,7 @@
              {onReplay && (
                  <button
                      onClick={onReplay}
-                     // Disable if any audio is playing UNLESS it's the audio for THIS button
+
                      disabled={isAnyAudioPlaying && !isAudioPlayingNow}
                      className="mt-4 text-gray-500 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                      aria-label={isAudioPlayingNow ? "Audio playing" : "Play audio"}
@@ -158,7 +150,7 @@
      if (timeLeft === null) return null;
      const minutes = Math.floor(timeLeft / 60);
      const seconds = timeLeft % 60;
-     const isEnding = timeLeft <= 60; // Highlight when 60 seconds or less remain
+     const isEnding = timeLeft <= 60; 
      return (
         <div className={`text-sm sm:text-lg font-mono px-2 sm:px-3 py-1 rounded-md transition-colors ${isEnding ? 'bg-red-500/20 text-red-400' : 'bg-gray-900 text-gray-300'}`}>
             <span>{String(minutes).padStart(2, '0')}</span>:<span>{String(seconds).padStart(2, '0')}</span>
@@ -169,26 +161,26 @@
  const DebateEndModal = ({ isOpen, debateId, onNavigateToAnalytics }) => {
      const navigate = useNavigate();
      const [showGeneratingMsg, setShowGeneratingMsg] = useState(false);
-     const [countdown, setCountdown] = useState(20); // Initial countdown to 20
+     const [countdown, setCountdown] = useState(20); 
      const countdownIntervalRef = useRef(null);
-     const timeoutRef = useRef(null); // Ref for the setTimeout
+     const timeoutRef = useRef(null); 
 
-     // Effect to handle modal opening/closing and cleanup
+
     useEffect(() => {
         if (isOpen) {
-            // Reset state when modal opens
+
             setShowGeneratingMsg(false);
-            setCountdown(20); // Reset countdown to 20
+            setCountdown(20); 
             if (countdownIntervalRef.current) {
                 clearInterval(countdownIntervalRef.current);
                 countdownIntervalRef.current = null;
             }
-             if (timeoutRef.current) { // Clear timeout as well
+             if (timeoutRef.current) { 
                 clearTimeout(timeoutRef.current);
                 timeoutRef.current = null;
             }
         } else {
-            // Cleanup if modal is forced closed externally
+
             if (countdownIntervalRef.current) {
                 clearInterval(countdownIntervalRef.current);
                 countdownIntervalRef.current = null;
@@ -199,28 +191,27 @@
             }
         }
 
-        // Cleanup function for when component unmounts OR isOpen changes to false
+
         return () => {
             if (countdownIntervalRef.current) {
                 clearInterval(countdownIntervalRef.current);
-                countdownIntervalRef.current = null; // Clear ref on cleanup
+                countdownIntervalRef.current = null; 
             }
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
-                timeoutRef.current = null; // Clear ref on cleanup
+                timeoutRef.current = null; 
             }
         };
-    }, [isOpen]); // Depend only on isOpen
+    }, [isOpen]); 
 
 
      const handleViewAnalyticsClick = () => {
          setShowGeneratingMsg(true);
-         setCountdown(20); // Reset countdown explicitly to 20
-         // Clear any previous interval before starting a new one
+         setCountdown(20); 
          if (countdownIntervalRef.current) {
              clearInterval(countdownIntervalRef.current);
          }
-         // Clear previous timeout if exists
+
          if (timeoutRef.current) {
              clearTimeout(timeoutRef.current);
          }
@@ -229,19 +220,19 @@
             setCountdown(prev => prev > 0 ? prev - 1 : 0);
          }, 1000);
 
-         // Set the timeout for navigation
+
          timeoutRef.current = setTimeout(() => {
-             if (countdownIntervalRef.current) { // Check if interval still exists
+             if (countdownIntervalRef.current) { 
                  clearInterval(countdownIntervalRef.current);
-                 countdownIntervalRef.current = null; // Clear ref
+                 countdownIntervalRef.current = null; 
              }
-             // No need to setShowGeneratingMsg(false) as navigation happens
+
              if (onNavigateToAnalytics) {
                 onNavigateToAnalytics();
              } else {
                 navigate(`/analytics/${debateId}`);
              }
-         }, 20000); // Changed delay to 20 seconds
+         }, 20000); 
      };
 
      if (!isOpen) return null;
@@ -299,11 +290,10 @@
  const StopIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>); // End debate icon
 
 
- // --- Main Debate Page Component ---
+
  const DebatePage = () => {
      const { debateId } = useParams();
-     const navigate = useNavigate(); // Use navigate hook
-     // Pass currentAudioSrc to child components that need to know *which* audio is playing
+     const navigate = useNavigate(); 
      const { playAudio, stopAudio, isPlaying, currentAudioSrc } = useAudioPlayer();
      const [debate, setDebate] = useState(null);
      const [messages, setMessages] = useState([]);
@@ -317,48 +307,46 @@
      const [timeLeft, setTimeLeft] = useState(null);
      const [isDebateOver, setIsDebateOver] = useState(false);
      const [showEndModal, setShowEndModal] = useState(false);
-     const [closingStatementPrompted, setClosingStatementPrompted] = useState(false); // New state for closing prompt
+     const [closingStatementPrompted, setClosingStatementPrompted] = useState(false); 
      const chatEndRef = useRef(null);
-     const timerIntervalRef = useRef(null); // Ref to store timer interval ID
-     const finalTranscriptRef = useRef(''); // Ref to accumulate final transcript in continuous mode
+     const timerIntervalRef = useRef(null); 
+     const finalTranscriptRef = useRef(''); 
 
-     // Scroll to bottom effect
+
      useEffect(() => {
          setTimeout(() => {
              chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-         }, 150); // Increased delay slightly
+         }, 150);
      }, [messages, isAiTyping]);
 
-      // Function to manually end the debate
+
      const handleEndDebate = useCallback(async () => {
          console.log("handleEndDebate called");
-         // Ensure timer is cleared if running
+
          if (timerIntervalRef.current) {
              clearInterval(timerIntervalRef.current);
              timerIntervalRef.current = null;
          }
-         setTimeLeft(0); // Explicitly set time left to 0 for UI
-         stopAudio(); // Stop any currently playing audio
-         // Stop recording if active
+         setTimeLeft(0); 
+         stopAudio(); 
          if (recognition && isRecording) {
             try {
                 console.log("Stopping recognition due to debate end.");
-                recognition.stop(); // This will trigger 'end' listener
+                recognition.stop(); 
             } catch(e) {
                 console.warn("Error stopping recognition on debate end:", e);
-                // Force state if stop fails
+
                 setIsRecording(false);
-                finalTranscriptRef.current = ''; // Clear potentially incomplete transcript
+                finalTranscriptRef.current = '';
             }
-            // setIsRecording(false); // Let the 'end' handler do this
+
          }
 
-         // Only proceed if the debate isn't already marked as over
-         if (!isDebateOver) {
-             setIsDebateOver(true); // Set state immediately
-             setShowEndModal(true); // Show the modal
 
-             // Add system message only if it wasn't the last message
+         if (!isDebateOver) {
+             setIsDebateOver(true); 
+             setShowEndModal(true); 
+
              setMessages(prev => {
                 const lastMsg = prev[prev.length -1];
                 if (lastMsg?.sender !== 'system' || !lastMsg.text.includes("Debate ended")) {
@@ -367,7 +355,7 @@
                 return prev;
              });
 
-             // Trigger analysis request
+
              try {
                  console.log(`Sending analysis request for debate ${debateId}`);
                  await fetch(`${import.meta.env.VITE_BACKEND_URL}/debate/analyze/${debateId}`, {
@@ -377,7 +365,7 @@
                   console.log("Analysis request sent successfully after end.");
              } catch (error) {
                  console.error("Failed to trigger debate analysis after end:", error);
-                 // Add error message only if no previous system error exists
+
                  setMessages(prev => {
                     const lastMsg = prev[prev.length - 1];
                     if (lastMsg?.sender !== 'system' || !lastMsg.text.includes("Could not start analysis")) {
@@ -388,17 +376,17 @@
              }
          } else {
              console.log("Debate already over, ensuring modal is shown.");
-             // If debate is over but modal isn't showing, show it
+
              if (!showEndModal) setShowEndModal(true);
          }
-     // Include all state dependencies that are read inside
-     }, [debateId, stopAudio, isDebateOver, showEndModal, isRecording]); // Added isRecording
 
-     // Initialize debate effect
+     }, [debateId, stopAudio, isDebateOver, showEndModal, isRecording]); 
+
+
      useEffect(() => {
          if (!debateId) return;
          console.log(`--- Initializing Debate ${debateId} ---`);
-         // Reset ALL relevant states at the beginning
+
          setIsLoading(true);
          setIsEmptyPastDebate(false);
          setMessages([]);
@@ -408,7 +396,7 @@
          setShowEndModal(false);
          setClosingStatementPrompted(false);
          setTimeLeft(null);
-         stopAudio(); // Stop any audio from potentially previous debate state
+         stopAudio(); 
 
          if (timerIntervalRef.current) {
              clearInterval(timerIntervalRef.current);
@@ -434,19 +422,19 @@
 
                  if (historyData.length > 0) {
                      console.log("History found, setting review mode.");
-                     setMessages(historyData.map((m, idx) => ({ // Add key during mapping
+                     setMessages(historyData.map((m, idx) => ({ 
                          sender: m.role,
                          text: m.text,
                          audio: m.audio || null,
-                         key: `${m.role}-${idx}-${m._id || Date.now()}` // Use _id if available
+                         key: `${m.role}-${idx}-${m._id || Date.now()}` 
                      })));
                      setIsReviewMode(true);
-                     setIsDebateOver(true); // Mark as over if viewing history
-                  } else if (debateData.analytics) { // Check if analysis exists but history is empty
+                     setIsDebateOver(true); 
+                  } else if (debateData.analytics) { 
                      console.log("Analysis exists but no history, setting empty past debate state.");
                      setIsEmptyPastDebate(true);
                      setIsReviewMode(true);
-                     setIsDebateOver(true); // Mark as over
+                     setIsDebateOver(true); 
                  } else { // No history, no analysis - start new debate flow
                      console.log("No history/analysis, initializing new debate flow.");
                      setIsReviewMode(false);
@@ -469,7 +457,7 @@
                      if (audio) {
                          playAudio(audio);
                      }
-                      // Initialize timeLeft here for new debates
+
                      if (!isReviewMode && !isDebateOver && !isEmptyPastDebate && debateData) {
                          const totalSeconds = debateData.duration * 60;
                          setTimeLeft(totalSeconds);
@@ -486,67 +474,66 @@
              }
          };
          initializeDebate();
-      // Only rerun when debateId changes
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+
      }, [debateId]);
 
 
-      // Timer effect - Adjusted to start ONLY after timeLeft is set by init effect
+
      useEffect(() => {
-        // Conditions to *not* run the timer logic
+
         if (!debate || isReviewMode || isLoading || isEmptyPastDebate || isDebateOver || timeLeft === null) {
-             // Ensure timer is cleared if it exists and state requires stopping
+
              if(timerIntervalRef.current && (isReviewMode || isDebateOver || isEmptyPastDebate)) {
                 clearInterval(timerIntervalRef.current);
                 timerIntervalRef.current = null;
                 console.log("Cleared timer due to state change (review/over/empty).");
              }
-             return; // Don't start timer if conditions aren't met
+             return; 
          }
 
-         // Only start interval if timeLeft is set (not null) and interval isn't already running
+
          if (!timerIntervalRef.current) {
             console.log(`Starting timer interval with timeLeft=${timeLeft}`);
             timerIntervalRef.current = setInterval(() => {
                 setTimeLeft(prevTime => {
                     // Safety checks
-                    if (prevTime === null) { // Should not happen if logic is correct, but safe check
+                    if (prevTime === null) { 
                         console.warn("Timer interval running with null timeLeft, clearing.");
                         clearInterval(timerIntervalRef.current);
                         timerIntervalRef.current = null;
                         return null;
                     }
-                    // Check isDebateOver flag inside the interval callback as well
+
                     if (isDebateOver) {
                          console.warn("Timer interval detected debate ended flag set, clearing.");
                          clearInterval(timerIntervalRef.current);
                          timerIntervalRef.current = null;
-                         return prevTime; // Return current value (likely 0)
+                         return prevTime; 
                     }
 
-                    if (prevTime <= 1) { // When time runs out
+                    if (prevTime <= 1) { 
                         console.log("Timer reached 0 via interval.");
-                        clearInterval(timerIntervalRef.current); // Clear first
+                        clearInterval(timerIntervalRef.current); 
                         timerIntervalRef.current = null;
-                        handleEndDebate(); // Use the common end function
-                        return 0; // Explicitly return 0
+                        handleEndDebate(); 
+                        return 0; 
                     }
 
-                    // Decrement time
+
                     const newTime = prevTime - 1;
 
-                    // Calculate closing time based on initial duration
+
                     let closingTime;
                     if (debate.duration === 5) closingTime = 60;
                     else if (debate.duration === 10) closingTime = 120;
                     else if (debate.duration === 15) closingTime = 180;
                     else closingTime = 60; // Default
 
-                    // Check closingStatementPrompted flag
+
                     if (newTime === closingTime && !closingStatementPrompted) {
                         console.log("Prompting closing statement.");
                         setMessages(prev => {
-                            // Check if the prompt already exists
+
                             const alreadyPrompted = prev.some(msg => msg.key?.startsWith('system-closing'));
                             if (!alreadyPrompted) {
                                 return [...prev, { sender: 'system', text: 'You have a few minutes left. Please make your closing statement.', key: `system-closing-${Date.now()}` }];
@@ -560,7 +547,7 @@
             }, 1000);
          }
 
-         // Cleanup function for the effect
+
          return () => {
               if (timerIntervalRef.current) {
                 console.log("Cleaning up timer interval in Timer Effect.");
@@ -568,15 +555,15 @@
                 timerIntervalRef.current = null; // Important: Clear ref on cleanup
               }
          };
-         // Rerun if these core states influencing timer start/stop change, OR if timeLeft itself changes (e.g. initial set)
+
      }, [debate, isReviewMode, isLoading, isEmptyPastDebate, isDebateOver, handleEndDebate, closingStatementPrompted, timeLeft]);
 
 
-     // handleSendMessage defined using useCallback
+
       const handleSendMessage = useCallback(async (text) => {
          stopAudio(); // Stop AI if it's speaking
          const messageText = (typeof text === 'string' ? text : userInput).trim();
-         // Additional check: prevent sending if already sending/typing
+
          if (messageText === '' || isReviewMode || isDebateOver || isPlaying || isAiTyping) {
              console.log("Send blocked:", {messageText, isReviewMode, isDebateOver, isPlaying, isAiTyping});
              return;
@@ -584,12 +571,12 @@
 
          const userMessage = { sender: 'user', text: messageText, key: `user-${Date.now()}` };
          setMessages(prev => [...prev, userMessage]);
-         setUserInput(''); // Clear input field immediately
-         setIsAiTyping(true); // Indicate AI is "thinking"
+         setUserInput(''); 
+         setIsAiTyping(true); 
          setError(null);
 
          try {
-             // Save user message (can be fire-and-forget or await)
+
              await fetch(`${import.meta.env.VITE_BACKEND_URL}/debate/addUserMessage`, {
                  method: 'POST',
                  headers: { 'Content-Type': 'application/json' },
@@ -598,7 +585,7 @@
              });
              console.log("User message saved.");
 
-             // Get AI response
+
              console.log("Requesting AI response...");
              const aiRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/debate/getAiResponse`, {
                  method: 'POST',
@@ -607,7 +594,7 @@
                  body: JSON.stringify({ debateId, userLastArgument: messageText }),
              });
 
-             // Check response BEFORE setting typing to false
+
              if (!aiRes.ok) {
                  const errorBody = await aiRes.json();
                  throw new Error(errorBody.message || `AI response failed with status ${aiRes.status}`);
@@ -615,8 +602,8 @@
              const { response, audio } = await aiRes.json();
              console.log("AI response received.");
 
-              // Add AI message AFTER response received
-             setIsAiTyping(false); // Stop typing indicator *before* adding message/playing audio
+
+             setIsAiTyping(false); 
              setMessages(prev => [...prev, { sender: 'ai', text: response, audio: audio, key: `ai-${Date.now()}` }]);
              if (audio) {
                  playAudio(audio);
@@ -624,54 +611,52 @@
 
          } catch (err) {
              console.error("Error during message send/receive:", err);
-             // Add error message to chat
+
              setMessages(prev => [...prev, { sender: 'system', text: `Sorry, an error occurred: ${err.message}`, key: `system-error-${Date.now()}` }]);
              setError(err.message);
-             setIsAiTyping(false); // Ensure typing stops on error
+             setIsAiTyping(false); 
          }
       }, [debateId, isReviewMode, isDebateOver, isPlaying, isAiTyping, stopAudio, playAudio, userInput]); // Added userInput
 
 
-      // Speech Recognition Listener Effect - Adjusted for Continuous Mode
+
      useEffect(() => {
          if (!recognition) return;
 
-         let currentInterim = ''; // Track interim locally if needed for UI later
+         let currentInterim = ''; 
 
          const handleResult = (event) => {
-             let interimTranscriptLocal = ''; // Use local var inside handler - FIXED ReferenceError
-             let finalTranscriptThisEvent = ''; // Track final part within this event
+             let interimTranscriptLocal = ''; 
+             let finalTranscriptThisEvent = ''; 
 
              for (let i = event.resultIndex; i < event.results.length; ++i) {
                  const transcriptPart = event.results[i][0].transcript;
                  if (event.results[i].isFinal) {
-                     finalTranscriptThisEvent += transcriptPart; // Append final parts
+                     finalTranscriptThisEvent += transcriptPart; 
                  } else {
-                     interimTranscriptLocal += transcriptPart; // Append interim parts - FIXED ReferenceError
+                     interimTranscriptLocal += transcriptPart; 
                  }
              }
-             // Update the ref ONLY with the newly finalized part for this event
+
              if (finalTranscriptThisEvent) {
-                finalTranscriptRef.current += finalTranscriptThisEvent + ' '; // Add space between final parts
+                finalTranscriptRef.current += finalTranscriptThisEvent + ' '; 
              }
-             currentInterim = interimTranscriptLocal; // Update local interim
+             currentInterim = interimTranscriptLocal; 
              console.log("Interim:", currentInterim, "| Final accumulated:", finalTranscriptRef.current.trim());
-             // Optionally update UI with live transcript:
-             // setUserInput(finalTranscriptRef.current.trim() + ' ' + currentInterim);
          };
 
          const handleError = (event) => {
              console.error("Speech recognition error:", event.error, "| Message:", event.message);
-             // Filter out common non-fatal errors
+
              if (event.error !== 'no-speech' && event.error !== 'aborted') {
                  let errorMsg = `Speech recognition error: ${event.error}`;
                  if (event.error === 'audio-capture') errorMsg = "Audio capture failed. Check microphone permissions.";
                  else if (event.error === 'not-allowed') errorMsg = "Microphone access denied. Please allow browser access.";
                  else if (event.error === 'network') errorMsg = "Network error during speech recognition.";
-                 // Avoid adding duplicate errors
+
                  setMessages(prev => {
                      const lastMsg = prev[prev.length - 1];
-                     // Only add if the *exact* same error isn't the last message
+
                      if(lastMsg?.sender !== 'system' || lastMsg.text !== errorMsg) {
                         return [...prev, { sender: 'system', text: errorMsg, key: `system-sr-error-${Date.now()}` }];
                      }
@@ -682,24 +667,19 @@
              } else if (event.error === 'no-speech') {
                  console.log("No speech detected (normal in continuous mode if silent).");
              }
-             // Ensure recording state is reset on any error or abort
-             // This might conflict with handleEnd, let handleEnd manage final state
              setIsRecording(false);
          };
 
          const handleEnd = () => {
              console.log("Speech recognition ended (onend event).");
-             // Check isRecording state *before* sending. If it became false due to an error/abort, don't send.
-             // Also check finalTranscriptRef to ensure there's something to send.
              if (isRecording && finalTranscriptRef.current.trim()) {
                 console.log("Sending final transcript from 'end' event:", finalTranscriptRef.current.trim());
                 handleSendMessage(finalTranscriptRef.current.trim());
              } else {
                  console.log("Recognition ended, but no final transcript to send or wasn't in recording state when ended.");
              }
-             // Reset transcript ref and state regardless, ensure state becomes false
              finalTranscriptRef.current = '';
-             setIsRecording(false); // Crucial: ensure state is false on end
+             setIsRecording(false); 
          };
 
          // Add listeners
@@ -714,8 +694,6 @@
                 recognition.removeEventListener('result', handleResult);
                 recognition.removeEventListener('error', handleError);
                 recognition.removeEventListener('end', handleEnd);
-                // Abort recognition if it's currently active when component unmounts or effect reruns
-                // Use a local variable to capture the state at the time of cleanup setup
                 const wasRecordingAtCleanupSetup = isRecording;
                 if (wasRecordingAtCleanupSetup) {
                      try {
@@ -724,7 +702,6 @@
                      } catch(e) {
                         console.warn("Error aborting recognition on cleanup:", e);
                      }
-                     // Force state if abort fails to trigger 'end' - potential safeguard
                      setIsRecording(false);
                 }
              }
@@ -738,7 +715,7 @@
      };
 
      const toggleRecording = () => {
-         // Prevent action if conditions aren't met
+
          if (!recognition || isReviewMode || isDebateOver || isPlaying || isAiTyping) {
              console.log("Recording toggle blocked:", { recognition: !!recognition, isReviewMode, isDebateOver, isPlaying, isAiTyping });
              return;
@@ -747,7 +724,6 @@
              console.log("Stopping recognition (manual toggle)");
              try {
                  recognition.stop(); // This should trigger the 'end' event
-                 // The 'end' event listener handles sending transcript and setting isRecording=false
              } catch(e) {
                  console.warn("Error stopping recognition:", e);
                  setIsRecording(false); // Force state on error
