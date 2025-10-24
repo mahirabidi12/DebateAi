@@ -17,7 +17,8 @@ export async function signup(req, res) {
     const token = await generateToken(newUser._id);
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: true,
+      sameSite: 'None',
+      secure: true,     
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
