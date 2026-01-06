@@ -46,8 +46,9 @@ export async function login(req, res) {
         secure:true,
         maxAge: 30 * 24 * 60 * 60 * 1000,
       });
+      return res.status(200).json("Login Successful")
     }
-    return res.status(200).json("Login Successful")
+    return res.status(401).json({ msg: "Invalid password" })
   } catch (error) {
     res.status(401).json("InvalidCredentials , Login failed")
   }
