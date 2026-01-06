@@ -12,13 +12,16 @@ export const SignupForm = ({ toggleView }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        console.log('[SIGNUP FRONTEND] Form submitted');
         setLoading(true);
         setError('');
 
         try {
             const apiUrl = `${import.meta.env.VITE_BACKEND_URL}/auth/signup`;
-            console.log(apiUrl)
+            console.log('[SIGNUP FRONTEND] API URL:', apiUrl);
+            console.log('[SIGNUP FRONTEND] Request payload:', { name, email, password: password ? '***' : 'missing' });
 
+            console.log('[SIGNUP FRONTEND] Sending fetch request...');
             const res = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -26,20 +29,37 @@ export const SignupForm = ({ toggleView }) => {
                 credentials: 'include'
             });
 
+            console.log('[SIGNUP FRONTEND] Response status:', res.status);
+            console.log('[SIGNUP FRONTEND] Response headers:', Object.fromEntries(res.headers.entries()));
+            
             const data = await res.json();
+            console.log('[SIGNUP FRONTEND] Response data:', data);
 
             if (!res.ok) {
+                console.error('[SIGNUP FRONTEND] Request failed with status:', res.status);
                 throw new Error(data.message || 'Signup failed. Please try again.');
             }
 
-            console.log('Signup Successful:', data);
-            // On successful signup, redirect to the login page
-            // navigate('/login'); 
+            console.log('[SIGNUP FRONTEND] Signup successful!');
+            console.log('[SIGNUP FRONTEND] Checking cookies before delay...');
+            console.log('[SIGNUP FRONTEND] document.cookie:', document.cookie);
+            
+            // Wait a moment for cookie to be processed by browser
+            console.log('[SIGNUP FRONTEND] Waiting 200ms for cookie to be processed...');
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+            console.log('[SIGNUP FRONTEND] Checking cookies after delay...');
+            console.log('[SIGNUP FRONTEND] document.cookie:', document.cookie);
+            console.log('[SIGNUP FRONTEND] Navigating to dashboard...');
             navigate('/dashboard'); 
+            console.log('[SIGNUP FRONTEND] Navigation triggered');
 
         } catch (err) {
+            console.error('[SIGNUP FRONTEND] Error occurred:', err);
+            console.error('[SIGNUP FRONTEND] Error message:', err.message);
             setError(err.message);
         } finally {
+            console.log('[SIGNUP FRONTEND] Setting loading to false');
             setLoading(false);
         }
     };

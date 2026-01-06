@@ -11,12 +11,16 @@ export const LoginForm = ({ toggleView }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        console.log('[LOGIN FRONTEND] Form submitted');
         setLoading(true);
         setError('');
 
         try {
             const apiUrl = `${import.meta.env.VITE_BACKEND_URL}/auth/login`;
+            console.log('[LOGIN FRONTEND] API URL:', apiUrl);
+            console.log('[LOGIN FRONTEND] Request payload:', { email, password: password ? '***' : 'missing' });
 
+            console.log('[LOGIN FRONTEND] Sending fetch request...');
             const res = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -24,20 +28,37 @@ export const LoginForm = ({ toggleView }) => {
                 credentials: 'include'
             });
 
+            console.log('[LOGIN FRONTEND] Response status:', res.status);
+            console.log('[LOGIN FRONTEND] Response headers:', Object.fromEntries(res.headers.entries()));
+            
             const data = await res.json();
+            console.log('[LOGIN FRONTEND] Response data:', data);
 
             if (!res.ok) {
+                console.error('[LOGIN FRONTEND] Request failed with status:', res.status);
                 throw new Error(data.msg || data.message || 'Login failed. Please check your credentials.');
             }
 
-            console.log('Login Successful:', data);
-            // On successful login, you would typically save the user state/token.
-            // For now, we'll just navigate to the home page.
+            console.log('[LOGIN FRONTEND] Login successful!');
+            console.log('[LOGIN FRONTEND] Checking cookies before delay...');
+            console.log('[LOGIN FRONTEND] document.cookie:', document.cookie);
+            
+            // Wait a moment for cookie to be processed by browser
+            console.log('[LOGIN FRONTEND] Waiting 200ms for cookie to be processed...');
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+            console.log('[LOGIN FRONTEND] Checking cookies after delay...');
+            console.log('[LOGIN FRONTEND] document.cookie:', document.cookie);
+            console.log('[LOGIN FRONTEND] Navigating to dashboard...');
             navigate('/dashboard'); 
+            console.log('[LOGIN FRONTEND] Navigation triggered');
 
         } catch (err) {
+            console.error('[LOGIN FRONTEND] Error occurred:', err);
+            console.error('[LOGIN FRONTEND] Error message:', err.message);
             setError(err.message);
         } finally {
+            console.log('[LOGIN FRONTEND] Setting loading to false');
             setLoading(false);
         }
     };
